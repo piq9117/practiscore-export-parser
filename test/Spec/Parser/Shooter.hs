@@ -6,11 +6,11 @@ import Practiscore.Parser.Shooter
   ( Shooter (..),
     cell,
     cells,
-    parseShooter,
-    rawShooter,
+    parseShooters,
     shooterHeader,
     shooterLine,
     shooterLineIdentifier,
+    shootersWithFieldName,
   )
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
@@ -24,19 +24,19 @@ shooterParserSpec =
 
     let header :: Text = "D Comp,USPSA,FirstName,LastName,DQPistol,DQRifle,DQShotgun,Reentry,Class,Division,Match Points,Place Overall,Power Factor,Shotgun Division,Shotgun Power Factor,Shotgun Place Overall,Shotgun Entered,Shotgun Match Points,Rifle Division,Rifle Power Factor,Rifle Place Overall,Rifle Entered,Rifle Match Points,Aggregate,Aggregate Division,Aggregate Pistol Percent,Aggregate Pistol Points,Aggregate Place,Aggregate Rifle Percent,Aggregate Rifle Points,Aggregate Shotgun Percent,Aggregate Shotgun Points,Aggregate Total,Female,Age,Law,Military"
 
-    it "line identifier" $
+    it "shooterLineIdentifier" $
       (runParser shooterLineIdentifier mempty "E ") `shouldBe` (Right ())
     it "cell" $
       (runParser cell mempty "USPSANUMBER123") `shouldBe` (Right "USPSANUMBER123")
     it "cells" $
       (runParser cells mempty "first name,last name,USPSANUMBER123") `shouldBe` (Right ["first name", "last name", "USPSANUMBER123"])
-    it "shooter line" $
+    it "shooterLine" $
       shouldBe
-        (runParser shooterLine mempty shooterLineData)
+        (runParser shooterLine mempty (shooterLineData <> "\n"))
         (Right ["1", "uspsa-member-number", "first-name", "last-name", "No", "No", "No", "No", "B", "Carry Optics", "568.8844", "1", "Minor", "Open", "Major", "", "No", "", "Open", "Minor", "", "No", "", "No", "", "", "", "", "", "", "", "", "", "No", "", "No", "No"])
     it "header" $ do
       shouldBe
-        (runParser shooterHeader mempty header)
+        (runParser shooterHeader mempty (header <> "\n"))
         ( Right
             [ "Comp",
               "USPSA",
@@ -78,54 +78,55 @@ shooterParserSpec =
             ]
         )
 
-    it "raw shooter" $ do
+    it "shootersWithFieldName" $ do
       shouldBe
-        (runParser rawShooter mempty (header <> "\n" <> shooterLineData))
+        (runParser shootersWithFieldName mempty (header <> "\n" <> shooterLineData <> "\n"))
         ( Right
-            [ ("Comp", "1"),
-              ("USPSA", "uspsa-member-number"),
-              ("FirstName", "first-name"),
-              ("LastName", "last-name"),
-              ("DQPistol", "No"),
-              ("DQRifle", "No"),
-              ("DQShotgun", "No"),
-              ("Reentry", "No"),
-              ("Class", "B"),
-              ("Division", "Carry Optics"),
-              ("Match Points", "568.8844"),
-              ("Place Overall", "1"),
-              ("Power Factor", "Minor"),
-              ("Shotgun Division", "Open"),
-              ("Shotgun Power Factor", "Major"),
-              ("Shotgun Place Overall", ""),
-              ("Shotgun Entered", "No"),
-              ("Shotgun Match Points", ""),
-              ("Rifle Division", "Open"),
-              ("Rifle Power Factor", "Minor"),
-              ("Rifle Place Overall", ""),
-              ("Rifle Entered", "No"),
-              ("Rifle Match Points", ""),
-              ("Aggregate", "No"),
-              ("Aggregate Division", ""),
-              ("Aggregate Pistol Percent", ""),
-              ("Aggregate Pistol Points", ""),
-              ("Aggregate Place", ""),
-              ("Aggregate Rifle Percent", ""),
-              ("Aggregate Rifle Points", ""),
-              ("Aggregate Shotgun Percent", ""),
-              ("Aggregate Shotgun Points", ""),
-              ("Aggregate Total", ""),
-              ("Female", "No"),
-              ("Age", ""),
-              ("Law", "No"),
-              ("Military", "No")
+            [ [ ("Comp", "1"),
+                ("USPSA", "uspsa-member-number"),
+                ("FirstName", "first-name"),
+                ("LastName", "last-name"),
+                ("DQPistol", "No"),
+                ("DQRifle", "No"),
+                ("DQShotgun", "No"),
+                ("Reentry", "No"),
+                ("Class", "B"),
+                ("Division", "Carry Optics"),
+                ("Match Points", "568.8844"),
+                ("Place Overall", "1"),
+                ("Power Factor", "Minor"),
+                ("Shotgun Division", "Open"),
+                ("Shotgun Power Factor", "Major"),
+                ("Shotgun Place Overall", ""),
+                ("Shotgun Entered", "No"),
+                ("Shotgun Match Points", ""),
+                ("Rifle Division", "Open"),
+                ("Rifle Power Factor", "Minor"),
+                ("Rifle Place Overall", ""),
+                ("Rifle Entered", "No"),
+                ("Rifle Match Points", ""),
+                ("Aggregate", "No"),
+                ("Aggregate Division", ""),
+                ("Aggregate Pistol Percent", ""),
+                ("Aggregate Pistol Points", ""),
+                ("Aggregate Place", ""),
+                ("Aggregate Rifle Percent", ""),
+                ("Aggregate Rifle Points", ""),
+                ("Aggregate Shotgun Percent", ""),
+                ("Aggregate Shotgun Points", ""),
+                ("Aggregate Total", ""),
+                ("Female", "No"),
+                ("Age", ""),
+                ("Law", "No"),
+                ("Military", "No")
+              ]
             ]
         )
     it "shooter" $ do
       shouldBe
-        (parseShooter (header <> "\n" <> shooterLineData))
+        (parseShooters (header <> "\n" <> shooterLineData <> "\n"))
         ( Right
-            ( Shooter
+            [ Shooter
                 { comp = "1",
                   uspsa = "uspsa-member-number",
                   firstname = "first-name",
@@ -164,7 +165,7 @@ shooterParserSpec =
                   law = "No",
                   military = "No"
                 }
-            )
+            ]
         )
 
 testTree :: IO TestTree
