@@ -76,7 +76,11 @@ library
     , relude
     , text
 
-  exposed-modules:  Practiscore.Parser.Shooter
+  exposed-modules:
+    Practiscore.Parser
+    Practiscore.Parser.Report
+    Practiscore.Parser.Shooter
+    Practiscore.Parser.Stage
 
 test-suite practiscore-export-parser-test
   import:         common-option
@@ -93,4 +97,6 @@ test-suite practiscore-export-parser-test
     , tasty
     , tasty-hspec
 
-  other-modules:  Spec.Parser.Shooter
+  other-modules:
+    Spec.Parser.Shooter
+    Spec.Parser.Stage
