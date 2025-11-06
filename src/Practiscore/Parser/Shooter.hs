@@ -21,12 +21,13 @@ import Practiscore.Parser
     cells,
     lineStartingWith,
   )
+import Practiscore.USPSA (CompId (..))
 import Text.Megaparsec (runParser)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Shooter = Shooter
-  { comp :: Maybe Word8,
+  { comp :: Maybe CompId,
     uspsa :: Text,
     firstname :: Text,
     lastname :: Text,
@@ -119,7 +120,7 @@ decodeShooters = do
       foldr
         ( \(header, cell) accum ->
             case header of
-              "Comp" -> accum {comp = readMaybe (toString cell)}
+              "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
               "USPSA" -> accum {uspsa = cell}
               "FirstName" -> accum {firstname = cell}
               "LastName" -> accum {lastname = cell}
