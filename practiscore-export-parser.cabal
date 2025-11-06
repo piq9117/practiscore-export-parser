@@ -82,6 +82,8 @@ library
     Practiscore.Parser.Score
     Practiscore.Parser.Shooter
     Practiscore.Parser.Stage
+    Practiscore.USPSA
+    Practiscore.USPSA.Shooter
 
 test-suite practiscore-export-parser-test
   import:         common-option

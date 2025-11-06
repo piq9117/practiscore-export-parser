@@ -10,12 +10,13 @@ module Practiscore.Parser.Score
 where
 
 import Practiscore.Parser (Parser, cells, lineStartingWith)
+import Practiscore.USPSA (CompId (..))
 import Text.Megaparsec.Char (newline)
 
 data Score = Score
   { gun :: Text,
     stage :: Maybe Word8,
-    comp :: Maybe Word8,
+    comp :: Maybe CompId,
     dQ :: Text,
     dNF :: Text,
     a :: Word8,
@@ -95,7 +96,7 @@ decodeScores = do
             case header of
               "Gun" -> accum {gun = cell}
               "Stage" -> accum {stage = readMaybe (toString cell)}
-              "Comp" -> accum {comp = readMaybe (toString cell)}
+              "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
               "DQ" -> accum {dQ = cell}
               "DNF" -> accum {dNF = cell}
               "A" -> accum {a = fromMaybe 0 $ readMaybe (toString cell)}
