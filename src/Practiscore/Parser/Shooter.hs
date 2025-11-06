@@ -26,7 +26,7 @@ import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Shooter = Shooter
-  { comp :: Text,
+  { comp :: Maybe Word8,
     uspsa :: Text,
     firstname :: Text,
     lastname :: Text,
@@ -69,7 +69,7 @@ data Shooter = Shooter
 emptyShooter :: Shooter
 emptyShooter =
   Shooter
-    { comp = "",
+    { comp = Nothing,
       uspsa = "",
       firstname = "",
       lastname = "",
@@ -119,7 +119,7 @@ decodeShooters = do
       foldr
         ( \(header, cell) accum ->
             case header of
-              "Comp" -> accum {comp = cell}
+              "Comp" -> accum {comp = readMaybe (toString cell)}
               "USPSA" -> accum {uspsa = cell}
               "FirstName" -> accum {firstname = cell}
               "LastName" -> accum {lastname = cell}
