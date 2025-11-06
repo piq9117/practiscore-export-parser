@@ -4,17 +4,18 @@ module Practiscore.Parser.Report where
 
 import Control.Applicative.Combinators (manyTill)
 import Practiscore.Parser (Parser, lineStartingWith)
-import Practiscore.Parser.Shooter (Shooter)
-import Practiscore.Parser.Shooter qualified
-import Practiscore.Parser.Stage (stageHeader)
+import Practiscore.Parser.Score (Score, decodeScores)
+import Practiscore.Parser.Shooter (Shooter, decodeShooters)
+import Practiscore.Parser.Stage (stagesWithFieldName)
 import Text.Megaparsec (anySingle, runParser)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Report = Report
-  { summary :: Text,
+  { summary :: !Text,
     shooters :: ![Shooter],
-    infoMetadata :: [Text]
+    scores :: ![Score],
+    infoMetadata :: ![Text]
   }
   deriving stock (Show)
 
@@ -31,13 +32,15 @@ report = do
   info <- info
   _ <- zMetadata
   summary <- matchSummary
-  shooters <- Practiscore.Parser.Shooter.decodeShooters
-  _ <- stageHeader
+  shooters <- decodeShooters
+  _ <- stagesWithFieldName
+  scores <- decodeScores
   pure ()
   pure
     Report
       { summary,
         shooters,
+        scores,
         infoMetadata = info
       }
 
