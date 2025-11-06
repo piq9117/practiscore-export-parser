@@ -79,6 +79,7 @@ library
   exposed-modules:
     Practiscore.Parser
     Practiscore.Parser.Report
+    Practiscore.Parser.Score
     Practiscore.Parser.Shooter
     Practiscore.Parser.Stage
 
@@ -98,5 +99,6 @@ test-suite practiscore-export-parser-test
     , tasty-hspec
 
   other-modules:
+    Spec.Parser.Score
     Spec.Parser.Shooter
     Spec.Parser.Stage
