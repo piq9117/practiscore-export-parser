@@ -109,7 +109,7 @@ emptyShooter =
       military = ""
     }
 
-parseShooters :: Text -> Either (ParseErrorBundle Text Void) [Shooter]
+parseShooters :: String -> Either (ParseErrorBundle String Void) [Shooter]
 parseShooters input = runParser decodeShooters mempty input
 
 decodeShooters :: Parser [Shooter]
@@ -121,48 +121,48 @@ decodeShooters = do
         ( \(header, cell) accum ->
             case header of
               "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
-              "USPSA" -> accum {uspsa = cell}
-              "FirstName" -> accum {firstname = cell}
-              "LastName" -> accum {lastname = cell}
-              "DQPistol" -> accum {dqpistol = cell}
-              "DQRifle" -> accum {dqrifle = cell}
-              "DQShotgun" -> accum {dqshotgun = cell}
-              "Reentry" -> accum {reentry = cell}
-              "Class" -> accum {class_ = cell}
-              "Division" -> accum {division = cell}
-              "Match Points" -> accum {matchPoints = cell}
-              "Place Overall" -> accum {placeOverall = cell}
-              "Power Factor" -> accum {powerFactor = cell}
-              "Shotgun Division" -> accum {shotgunDivision = cell}
-              "Shotgun Power Factor" -> accum {shotgunPowerFactor = cell}
-              "Shotgun Place Overall" -> accum {shotgunPlaceOverall = cell}
-              "Shotgun Entered" -> accum {shotgunEntered = cell}
-              "Shotgun Match Points" -> accum {shotgunMatchPoints = cell}
-              "Rifle Division" -> accum {rifleDivision = cell}
-              "Rifle Power Factor" -> accum {riflePowerFactor = cell}
-              "Rifle Place Overall" -> accum {riflePlaceOverall = cell}
-              "Rifle Entered" -> accum {rifleEntered = cell}
-              "Rifle Match Points" -> accum {rifleMatchPoints = cell}
-              "Aggregate" -> accum {aggregate = cell}
-              "Aggregate Division" -> accum {aggregateDivision = cell}
-              "Aggregate Pistol Percent" -> accum {aggregatePistolPercent = cell}
-              "Aggregate Pistol Points" -> accum {aggregatePistolPoints = cell}
-              "Aggregate Place" -> accum {aggregatePlace = cell}
-              "Aggregate Rifle Percent" -> accum {aggregateRiflePercent = cell}
-              "Aggregate Rifle Points" -> accum {aggregateRiflePoints = cell}
-              "Aggregate Shotgun Percent" -> accum {aggregateShotgunPercent = cell}
-              "Aggregate Shotgun Points" -> accum {aggregateShotgunPoints = cell}
-              "Aggregate Total" -> accum {aggregateTotal = cell}
-              "Female" -> accum {female = cell}
-              "Age" -> accum {age = cell}
-              "Law" -> accum {law = cell}
-              "Military" -> accum {military = cell}
+              "USPSA" -> accum {uspsa = toText cell}
+              "FirstName" -> accum {firstname = toText cell}
+              "LastName" -> accum {lastname = toText cell}
+              "DQPistol" -> accum {dqpistol = toText cell}
+              "DQRifle" -> accum {dqrifle = toText cell}
+              "DQShotgun" -> accum {dqshotgun = toText cell}
+              "Reentry" -> accum {reentry = toText cell}
+              "Class" -> accum {class_ = toText cell}
+              "Division" -> accum {division = toText cell}
+              "Match Points" -> accum {matchPoints = toText cell}
+              "Place Overall" -> accum {placeOverall = toText cell}
+              "Power Factor" -> accum {powerFactor = toText cell}
+              "Shotgun Division" -> accum {shotgunDivision = toText cell}
+              "Shotgun Power Factor" -> accum {shotgunPowerFactor = toText cell}
+              "Shotgun Place Overall" -> accum {shotgunPlaceOverall = toText cell}
+              "Shotgun Entered" -> accum {shotgunEntered = toText cell}
+              "Shotgun Match Points" -> accum {shotgunMatchPoints = toText cell}
+              "Rifle Division" -> accum {rifleDivision = toText cell}
+              "Rifle Power Factor" -> accum {riflePowerFactor = toText cell}
+              "Rifle Place Overall" -> accum {riflePlaceOverall = toText cell}
+              "Rifle Entered" -> accum {rifleEntered = toText cell}
+              "Rifle Match Points" -> accum {rifleMatchPoints = toText cell}
+              "Aggregate" -> accum {aggregate = toText cell}
+              "Aggregate Division" -> accum {aggregateDivision = toText cell}
+              "Aggregate Pistol Percent" -> accum {aggregatePistolPercent = toText cell}
+              "Aggregate Pistol Points" -> accum {aggregatePistolPoints = toText cell}
+              "Aggregate Place" -> accum {aggregatePlace = toText cell}
+              "Aggregate Rifle Percent" -> accum {aggregateRiflePercent = toText cell}
+              "Aggregate Rifle Points" -> accum {aggregateRiflePoints = toText cell}
+              "Aggregate Shotgun Percent" -> accum {aggregateShotgunPercent = toText cell}
+              "Aggregate Shotgun Points" -> accum {aggregateShotgunPoints = toText cell}
+              "Aggregate Total" -> accum {aggregateTotal = toText cell}
+              "Female" -> accum {female = toText cell}
+              "Age" -> accum {age = toText cell}
+              "Law" -> accum {law = toText cell}
+              "Military" -> accum {military = toText cell}
               _ -> accum
         )
         emptyShooter
         rawShooter
 
-shootersWithFieldName :: Parser [[(Text, Text)]]
+shootersWithFieldName :: Parser [[(String, String)]]
 shootersWithFieldName = do
   header <- shooterHeader
   lines <- shooterLines
@@ -170,16 +170,16 @@ shootersWithFieldName = do
     lines <&> \line ->
       zipWith (\h l -> (h, l)) header line
 
-shooterLines :: Parser [[Text]]
+shooterLines :: Parser [[String]]
 shooterLines = many shooterLine
 
-shooterLine :: Parser [Text]
+shooterLine :: Parser [String]
 shooterLine = shooterLineIdentifier *> cells <* newline
 
 shooterHeaderIdentifier :: Parser ()
 shooterHeaderIdentifier = lineStartingWith "D "
 
-shooterHeader :: Parser [Text]
+shooterHeader :: Parser [String]
 shooterHeader = shooterHeaderIdentifier *> cells <* newline
 
 -- There is no documentation for this. From what I see from the exported data

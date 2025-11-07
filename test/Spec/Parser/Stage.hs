@@ -11,8 +11,8 @@ import Text.Megaparsec (runParser)
 stageParserSpec :: Spec
 stageParserSpec = do
   describe "StageParser" $ do
-    let header :: Text = "F Number,Guntype,Minimum Rounds,Maximum Points,Classifier,Classifier_No,Stage_name,ScoringType,TimesRun"
-    let stageLineData :: Text = "G 1,Pistol,28,140,No,,I Am A Meat Popsicle,Comstock,1"
+    let header :: String = "F Number,Guntype,Minimum Rounds,Maximum Points,Classifier,Classifier_No,Stage_name,ScoringType,TimesRun"
+    let stageLineData :: String = "G 1,Pistol,28,140,No,,I Am A Meat Popsicle,Comstock,1"
 
     it "stagesWithFieldName" $
       shouldBe

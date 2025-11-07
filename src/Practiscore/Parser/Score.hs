@@ -94,11 +94,11 @@ decodeScores = do
       foldr
         ( \(header, cell) accum ->
             case header of
-              "Gun" -> accum {gun = cell}
+              "Gun" -> accum {gun = toText cell}
               "Stage" -> accum {stage = readMaybe (toString cell)}
               "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
-              "DQ" -> accum {dQ = cell}
-              "DNF" -> accum {dNF = cell}
+              "DQ" -> accum {dQ = toText cell}
+              "DNF" -> accum {dNF = toText cell}
               "A" -> accum {a = fromMaybe 0 $ readMaybe (toString cell)}
               "B" -> accum {b = fromMaybe 0 $ readMaybe (toString cell)}
               "C" -> accum {c = fromMaybe 0 $ readMaybe (toString cell)}
@@ -131,7 +131,7 @@ decodeScores = do
         emptyScore
         score
 
-scoresWithFieldName :: Parser [[(Text, Text)]]
+scoresWithFieldName :: Parser [[(String, String)]]
 scoresWithFieldName = do
   header <- scoreHeader
   lines <- scoreLines
@@ -139,16 +139,16 @@ scoresWithFieldName = do
     lines <&> \line ->
       zipWith (\h l -> (h, l)) header line
 
-scoreLines :: Parser [[Text]]
+scoreLines :: Parser [[String]]
 scoreLines = many scoreLine
 
-scoreLine :: Parser [Text]
+scoreLine :: Parser [String]
 scoreLine = scoreLineIdentifier *> cells <* newline
 
 scoreLineIdentifier :: Parser ()
 scoreLineIdentifier = lineStartingWith "I "
 
-scoreHeader :: Parser [Text]
+scoreHeader :: Parser [String]
 scoreHeader = scoreHeaderIdentifier *> cells <* newline
 
 scoreHeaderIdentifier :: Parser ()
