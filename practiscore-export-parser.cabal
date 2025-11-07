@@ -70,6 +70,7 @@ library
   build-depends:
     , base
     , bytestring
+    , cassava
     , conduit
     , megaparsec
     , parser-combinators
@@ -83,7 +84,7 @@ library
     Practiscore.Parser.Shooter
     Practiscore.Parser.Stage
     Practiscore.USPSA
-    Practiscore.USPSA.Shooter
+    Practiscore.USPSA.Match
 
 test-suite practiscore-export-parser-test
   import:         common-option
@@ -104,3 +105,4 @@ test-suite practiscore-export-parser-test
     Spec.Parser.Score
     Spec.Parser.Shooter
     Spec.Parser.Stage
+    Spec.USPSA.Match

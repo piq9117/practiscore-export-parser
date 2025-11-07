@@ -3,6 +3,7 @@ module Spec (main) where
 import Spec.Parser.Score qualified
 import Spec.Parser.Shooter qualified
 import Spec.Parser.Stage qualified
+import Spec.USPSA.Match qualified
 import Test.Tasty (defaultMain, testGroup)
 
 main :: IO ()
@@ -11,5 +12,6 @@ main =
     =<< sequence
       [ Spec.Parser.Shooter.testTree,
         Spec.Parser.Stage.testTree,
-        Spec.Parser.Score.testTree
+        Spec.Parser.Score.testTree,
+        Spec.USPSA.Match.testTree
       ]
