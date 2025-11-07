@@ -10,14 +10,14 @@ where
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Text.Megaparsec.Char (newline)
 
-stageHeader :: Parser [Text]
+stageHeader :: Parser [String]
 stageHeader =
   stageHeaderIdentifier *> cells <* newline
 
 stageHeaderIdentifier :: Parser ()
 stageHeaderIdentifier = lineStartingWith "F "
 
-stagesWithFieldName :: Parser [[(Text, Text)]]
+stagesWithFieldName :: Parser [[(String, String)]]
 stagesWithFieldName = do
   header <- stageHeader
   lines <- stageLines
@@ -25,10 +25,10 @@ stagesWithFieldName = do
     lines <&> \line ->
       zipWith (\h l -> (h, l)) header line
 
-stageLines :: Parser [[Text]]
+stageLines :: Parser [[String]]
 stageLines = many stageLine
 
-stageLine :: Parser [Text]
+stageLine :: Parser [String]
 stageLine = stageLineIdentifier *> cells <* newline
 
 stageLineIdentifier :: Parser ()

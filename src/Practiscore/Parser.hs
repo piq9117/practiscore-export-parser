@@ -10,16 +10,16 @@ import Control.Monad.Combinators (sepBy)
 import Text.Megaparsec (Parsec, noneOf, notFollowedBy, try)
 import Text.Megaparsec.Char (char, string)
 
-type Parser = Parsec Void Text
+type Parser = Parsec Void String
 
-lineStartingWith :: Text -> Parser ()
+lineStartingWith :: String -> Parser ()
 lineStartingWith prefix = try $ do
   _ <- string prefix
   notFollowedBy (char ' ')
 
-cells :: Parser [Text]
+cells :: Parser [String]
 cells =
   cell `sepBy` ","
 
-cell :: Parser Text
-cell = fmap toText $ many (noneOf @[] ",\n\r")
+cell :: Parser String
+cell = many (noneOf @[] ",\n\r")

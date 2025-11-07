@@ -19,7 +19,7 @@ data Report = Report
   }
   deriving stock (Show)
 
-parseReport :: Text -> Either (ParseErrorBundle Text Void) Report
+parseReport :: String -> Either (ParseErrorBundle String Void) Report
 parseReport fileContent =
   runParser
     report
