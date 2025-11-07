@@ -6,6 +6,7 @@ import Practiscore.Parser.Score
     scoreHeader,
     scoresWithFieldName,
   )
+import Practiscore.USPSA (CompId (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
@@ -24,7 +25,7 @@ scoreParserSpec =
             [ Score
                 { gun = "Pistol",
                   stage = Just 1,
-                  comp = Just 1,
+                  comp = Just CompId {unCompId = 1},
                   dQ = "No",
                   dNF = "No",
                   a = 26,
@@ -58,7 +59,7 @@ scoreParserSpec =
               Score
                 { gun = "Pistol",
                   stage = Just 1,
-                  comp = Just 2,
+                  comp = Just CompId {unCompId = 2},
                   dQ = "No",
                   dNF = "No",
                   a = 26,
