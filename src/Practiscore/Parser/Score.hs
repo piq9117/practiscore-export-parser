@@ -6,12 +6,16 @@ module Practiscore.Parser.Score
     scoreHeaderIdentifier,
     scoresWithFieldName,
     decodeScores,
+    parseScores,
   )
 where
 
+-- import Control.Applicative.Combinators (sepEndBy)
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Practiscore.USPSA (CompId (..))
+import Text.Megaparsec (runParser)
 import Text.Megaparsec.Char (newline)
+import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Score = Score
   { gun :: Text,
@@ -86,6 +90,9 @@ emptyScore =
       stagePowerFactor = Nothing
     }
 
+parseScores :: String -> Either (ParseErrorBundle String Void) [Score]
+parseScores input = runParser decodeScores mempty input
+
 decodeScores :: Parser [Score]
 decodeScores = do
   scores <- scoresWithFieldName
@@ -153,3 +160,9 @@ scoreHeader = scoreHeaderIdentifier *> cells <* newline
 
 scoreHeaderIdentifier :: Parser ()
 scoreHeaderIdentifier = lineStartingWith "H "
+
+-- cells :: Parser [Text]
+-- cells = sepEndBy cell (char ',')
+--
+-- cell :: Parser Text
+-- cell = takeWhileP (Just "field") (/= ',')

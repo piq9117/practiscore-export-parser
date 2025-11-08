@@ -1,3 +1,5 @@
+{-# LANGUAGE DerivingStrategies #-}
+
 module Practiscore.USPSA.Match
   ( Match (..),
     getShooterFromReport,
@@ -17,12 +19,13 @@ import Practiscore.Parser.Report (Report)
 import Practiscore.Parser.Report qualified
 import Practiscore.Parser.Score qualified
 import Practiscore.Parser.Shooter qualified
-import Practiscore.USPSA (CompId (..))
+import Practiscore.USPSA (UspsaMemberId (..))
 
 data Match = Match
   { shooter :: Practiscore.Parser.Shooter.Shooter,
-    scores :: ![Practiscore.Parser.Score.Score]
+    score :: Practiscore.Parser.Score.Score
   }
+  deriving stock (Show)
 
 instance DefaultOrdered Match where
   headerOrder _ =
@@ -46,53 +49,50 @@ instance DefaultOrdered Match where
         "time",
         "raw_points",
         "total_points",
-        "hitFactor",
+        "hit_factor",
         "stage_place"
       ]
 
 instance ToNamedRecord Match where
   toNamedRecord export =
     namedRecord
-      [ "uspsa_id" .= export.shooter.uspsa,
+      [ "uspsa_id" .= fmap (.unUspsaMemberId) export.shooter.uspsa,
         "firstname" .= export.shooter.firstname,
         "lastname" .= export.shooter.lastname,
         "class" .= export.shooter.class_,
         "division" .= export.shooter.division,
         "match_points" .= export.shooter.matchPoints,
-        "place_overall" .= export.shooter.placeOverall
+        "place_overall" .= export.shooter.placeOverall,
+        "gun" .= export.score.gun,
+        "stage" .= export.score.stage,
+        "A" .= export.score.a,
+        "B" .= export.score.b,
+        "C" .= export.score.c,
+        "D" .= export.score.b,
+        "miss" .= export.score.miss,
+        "no_shoot" .= export.score.noShoot,
+        "procedural" .= export.score.procedural,
+        "time" .= export.score.time,
+        "raw_points" .= export.score.rawPoints,
+        "total_points" .= export.score.totalPoints,
+        "hit_factor" .= export.score.hitFactor,
+        "stage_place" .= export.score.stagePlace
       ]
-      <> ( namedRecord $
-             concat
-               [ [ "gun" .= score.gun,
-                   "stage" .= score.stage,
-                   "A" .= score.a,
-                   "B" .= score.b,
-                   "C" .= score.c,
-                   "D" .= score.b,
-                   "miss" .= score.miss,
-                   "no_shoot" .= score.noShoot,
-                   "procedural" .= score.procedural,
-                   "time" .= score.time,
-                   "raw_points" .= score.rawPoints,
-                   "total_points" .= score.totalPoints,
-                   "hitFactor" .= score.hitFactor,
-                   "stage_place" .= score.stagePlace
-                 ]
-                 | score <- export.scores
-               ]
-         )
 
 getShooterFromReport ::
-  CompId ->
+  UspsaMemberId ->
   Report ->
-  Maybe Match
-getShooterFromReport compId report = do
-  shooter <- find (\shooter -> shooter.comp == Just compId) report.shooters
-  pure
-    Match
-      { shooter,
-        scores = filter (\score -> score.comp == Just compId) report.scores
-      }
+  [Match]
+getShooterFromReport memberId report = do
+  case find (\shooter -> shooter.uspsa == Just memberId) report.shooters of
+    Nothing -> []
+    Just shooter ->
+      [ Match
+          { shooter,
+            score
+          }
+        | score <- (filter (\score -> score.comp == shooter.comp) report.scores)
+      ]
 
-encodeMatch :: Match -> LByteString
-encodeMatch match = encodeDefaultOrderedByName [match]
+encodeMatch :: [Match] -> LByteString
+encodeMatch match = encodeDefaultOrderedByName match

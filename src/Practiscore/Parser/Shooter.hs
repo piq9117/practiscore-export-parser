@@ -12,23 +12,25 @@ module Practiscore.Parser.Shooter
     shooterLines,
     decodeShooters,
     shootersWithFieldName,
+    toUspsaMemberId,
   )
 where
 
+import Data.Text qualified
 import Practiscore.Parser
   ( Parser,
     cell,
     cells,
     lineStartingWith,
   )
-import Practiscore.USPSA (CompId (..))
+import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Text.Megaparsec (runParser)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Shooter = Shooter
   { comp :: Maybe CompId,
-    uspsa :: Text,
+    uspsa :: Maybe UspsaMemberId,
     firstname :: Text,
     lastname :: Text,
     dqpistol :: Text,
@@ -71,7 +73,7 @@ emptyShooter :: Shooter
 emptyShooter =
   Shooter
     { comp = Nothing,
-      uspsa = "",
+      uspsa = Nothing,
       firstname = "",
       lastname = "",
       dqpistol = "",
@@ -121,7 +123,7 @@ decodeShooters = do
         ( \(header, cell) accum ->
             case header of
               "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
-              "USPSA" -> accum {uspsa = toText cell}
+              "USPSA" -> accum {uspsa = toUspsaMemberId $ toText cell}
               "FirstName" -> accum {firstname = toText cell}
               "LastName" -> accum {lastname = toText cell}
               "DQPistol" -> accum {dqpistol = toText cell}
@@ -161,6 +163,13 @@ decodeShooters = do
         )
         emptyShooter
         rawShooter
+
+toUspsaMemberId :: Text -> Maybe UspsaMemberId
+toUspsaMemberId rawMemberId =
+  let memberId = Data.Text.strip rawMemberId
+   in if Data.Text.null memberId
+        then Nothing
+        else Just $ UspsaMemberId {unUspsaMemberId = memberId}
 
 shootersWithFieldName :: Parser [[(String, String)]]
 shootersWithFieldName = do
