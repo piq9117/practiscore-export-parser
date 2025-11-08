@@ -71,19 +71,21 @@ library
     , base
     , bytestring
     , cassava
-    , conduit
     , megaparsec
+    , optparse-applicative
     , parser-combinators
     , relude
     , text
 
   exposed-modules:
+    Practiscore.CLI
     Practiscore.Parser
     Practiscore.Parser.Report
     Practiscore.Parser.Score
     Practiscore.Parser.Shooter
     Practiscore.Parser.Stage
     Practiscore.USPSA
+    Practiscore.USPSA.CLI
     Practiscore.USPSA.Match
 
 test-suite practiscore-export-parser-test
@@ -102,7 +104,19 @@ test-suite practiscore-export-parser-test
     , tasty-hspec
 
   other-modules:
+    Spec.Parser.Report
     Spec.Parser.Score
     Spec.Parser.Shooter
     Spec.Parser.Stage
     Spec.USPSA.Match
+
+executable ps-tap
+  import:           common-option
+  main-is:          Main.hs
+  build-depends:
+    , base
+    , practiscore-export-parser
+    , relude
+
+  hs-source-dirs:   ps-tap
+  default-language: GHC2021
