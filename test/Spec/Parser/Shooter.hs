@@ -12,7 +12,7 @@ import Practiscore.Parser.Shooter
     shooterLineIdentifier,
     shootersWithFieldName,
   )
-import Practiscore.USPSA (CompId (..))
+import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
@@ -129,7 +129,7 @@ shooterParserSpec =
         ( Right
             [ Shooter
                 { comp = Just CompId {unCompId = 1},
-                  uspsa = "uspsa-member-number",
+                  uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
                   firstname = "first-name",
                   lastname = "last-name",
                   dqpistol = "No",

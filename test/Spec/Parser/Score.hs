@@ -3,6 +3,7 @@ module Spec.Parser.Score (testTree) where
 import Practiscore.Parser.Score
   ( Score (..),
     decodeScores,
+    parseScores,
     scoreHeader,
     scoresWithFieldName,
   )
@@ -17,6 +18,10 @@ scoreParserSpec =
   describe "ScoreParser" $ do
     let header = "H Gun,Stage,Comp,DQ,DNF,A,B,C,D,Miss,No Shoot,Procedural,Double Poppers,Double Popper Miss,Late Shot,Extra Shot,Extra Hit,No Penalty Miss,Additional Penalty,Total Penalty,T1,T2,T3,T4,T5,Time,Raw Points,Total Points,Hit Factor,Stage Points,Stage Place,Stage Power Factor"
     let scoreLines = "I Pistol,1,1,No,No,26,0,2,0,0,0,0,20,0,0,0,0,0,0,0,20.54,0,0,0,0,20.54,136,136,6.6212,140.0000,1,\nI Pistol,1,2,No,No,26,0,1,0,1,0,0,20,0,0,0,0,0,0,10,24.34,0,0,0,0,24.34,133,123,5.0534,106.8501,2,"
+
+    it "scores.csv" $ do
+      scoresContent <- readFileBS "./test/Spec/Parser/scores.csv"
+      shouldBe (isRight $ parseScores $ decodeUtf8 scoresContent) True
 
     it "decodeScores" $ do
       shouldBe

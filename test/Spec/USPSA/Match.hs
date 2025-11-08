@@ -4,7 +4,7 @@ module Spec.USPSA.Match (testTree) where
 
 import Practiscore.Parser.Score (Score (..))
 import Practiscore.Parser.Shooter (Shooter (..))
-import Practiscore.USPSA (CompId (..))
+import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Practiscore.USPSA.Match (Match (..), encodeMatch)
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
@@ -15,49 +15,49 @@ matchToCsvSpec =
   describe "Match" $ do
     it "encode Match to csv" $ do
       let match =
-            Match
-              { shooter =
-                  Shooter
-                    { comp = Just CompId {unCompId = 1},
-                      uspsa = "uspsa-member-number",
-                      firstname = "first-name",
-                      lastname = "last-name",
-                      dqpistol = "No",
-                      dqrifle = "No",
-                      dqshotgun = "No",
-                      reentry = "No",
-                      class_ = "B",
-                      division = "Carry Optics",
-                      matchPoints = "568.8844",
-                      placeOverall = "1",
-                      powerFactor = "Minor",
-                      shotgunDivision = "Open",
-                      shotgunPowerFactor = "Major",
-                      shotgunPlaceOverall = "",
-                      shotgunEntered = "No",
-                      shotgunMatchPoints = "",
-                      rifleDivision = "Open",
-                      riflePowerFactor = "Minor",
-                      riflePlaceOverall = "",
-                      rifleEntered = "No",
-                      rifleMatchPoints = "",
-                      aggregate = "No",
-                      aggregateDivision = "",
-                      aggregatePistolPercent = "",
-                      aggregatePistolPoints = "",
-                      aggregatePlace = "",
-                      aggregateRiflePercent = "",
-                      aggregateRiflePoints = "",
-                      aggregateShotgunPercent = "",
-                      aggregateShotgunPoints = "",
-                      aggregateTotal = "",
-                      female = "No",
-                      age = "",
-                      law = "No",
-                      military = "No"
-                    },
-                scores =
-                  [ Score
+            [ Match
+                { shooter =
+                    Shooter
+                      { comp = Just CompId {unCompId = 1},
+                        uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
+                        firstname = "first-name",
+                        lastname = "last-name",
+                        dqpistol = "No",
+                        dqrifle = "No",
+                        dqshotgun = "No",
+                        reentry = "No",
+                        class_ = "B",
+                        division = "Carry Optics",
+                        matchPoints = "568.8844",
+                        placeOverall = "1",
+                        powerFactor = "Minor",
+                        shotgunDivision = "Open",
+                        shotgunPowerFactor = "Major",
+                        shotgunPlaceOverall = "",
+                        shotgunEntered = "No",
+                        shotgunMatchPoints = "",
+                        rifleDivision = "Open",
+                        riflePowerFactor = "Minor",
+                        riflePlaceOverall = "",
+                        rifleEntered = "No",
+                        rifleMatchPoints = "",
+                        aggregate = "No",
+                        aggregateDivision = "",
+                        aggregatePistolPercent = "",
+                        aggregatePistolPoints = "",
+                        aggregatePlace = "",
+                        aggregateRiflePercent = "",
+                        aggregateRiflePoints = "",
+                        aggregateShotgunPercent = "",
+                        aggregateShotgunPoints = "",
+                        aggregateTotal = "",
+                        female = "No",
+                        age = "",
+                        law = "No",
+                        military = "No"
+                      },
+                  score =
+                    Score
                       { gun = "Pistol",
                         stage = Just 1,
                         comp = Just CompId {unCompId = 1},
@@ -90,7 +90,50 @@ matchToCsvSpec =
                         stagePoints = Just 140.0,
                         stagePlace = Just 1,
                         stagePowerFactor = Nothing
+                      }
+                },
+              Match
+                { shooter =
+                    Shooter
+                      { comp = Just CompId {unCompId = 1},
+                        uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
+                        firstname = "first-name",
+                        lastname = "last-name",
+                        dqpistol = "No",
+                        dqrifle = "No",
+                        dqshotgun = "No",
+                        reentry = "No",
+                        class_ = "B",
+                        division = "Carry Optics",
+                        matchPoints = "568.8844",
+                        placeOverall = "1",
+                        powerFactor = "Minor",
+                        shotgunDivision = "Open",
+                        shotgunPowerFactor = "Major",
+                        shotgunPlaceOverall = "",
+                        shotgunEntered = "No",
+                        shotgunMatchPoints = "",
+                        rifleDivision = "Open",
+                        riflePowerFactor = "Minor",
+                        riflePlaceOverall = "",
+                        rifleEntered = "No",
+                        rifleMatchPoints = "",
+                        aggregate = "No",
+                        aggregateDivision = "",
+                        aggregatePistolPercent = "",
+                        aggregatePistolPoints = "",
+                        aggregatePlace = "",
+                        aggregateRiflePercent = "",
+                        aggregateRiflePoints = "",
+                        aggregateShotgunPercent = "",
+                        aggregateShotgunPoints = "",
+                        aggregateTotal = "",
+                        female = "No",
+                        age = "",
+                        law = "No",
+                        military = "No"
                       },
+                  score =
                     Score
                       { gun = "Pistol",
                         stage = Just 1,
@@ -125,12 +168,12 @@ matchToCsvSpec =
                         stagePlace = Just 2,
                         stagePowerFactor = Nothing
                       }
-                  ]
-              }
+                }
+            ]
 
       shouldBe
         (encodeMatch match)
-        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hitFactor,stage_place\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2\r\n"
+        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hit_factor,stage_place\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,2,0,0,0,0,20.54,136,136,6.6212,1\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2\r\n"
 
 testTree :: IO TestTree
 testTree = testSpec "USPSA.Match" $ do
