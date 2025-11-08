@@ -16,10 +16,16 @@
         hsPkgs = prev.haskell.packages.ghc9102.override {
           overrides = hfinal: hprev: { };
         };
-        init-project = final.writeScriptBin "init-project" ''
-          ${final.hsPkgs.cabal-install}/bin/cabal init --non-interactive
-        '';
+        ps-tap = final.hsPkgs.callCabal2nix "ps-tap" ./. { };
       };
+
+      packages = forAllSystems (system:
+        let
+          pkgs = nixpkgsFor.${system};
+        in
+        {
+          ps-tap = pkgs.ps-tap;
+        });
 
       devShells = forAllSystems (system:
         let
@@ -39,7 +45,6 @@
               treefmt
               nixpkgs-fmt
               hsPkgs.cabal-fmt
-              init-project
             ] ++ libs;
             shellHook = "export PS1='[$PWD]\n❄ '";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
