@@ -2,11 +2,15 @@
 
 module Practiscore.Parser.Report
   ( Report (..),
+    ReportFields (..),
+    reportFields,
     parseReport,
     title,
     info,
     zMetadata,
     matchSummary,
+    reportFieldsToReport,
+    parseReportFields
   )
 where
 
@@ -27,12 +31,55 @@ data Report = Report
   }
   deriving stock (Show)
 
+emptyReport :: Report
+emptyReport = Report 
+  { summary = "",
+    shooters = [],
+    scores = [],
+    infoMetadata = []
+  }
+
+reportFieldsToReport :: [ReportFields] -> Report
+reportFieldsToReport reportFields = 
+  foldr (\fields accum -> 
+    case fields of
+      Summary summary -> accum { summary = summary }
+      Shooters shooters -> accum { shooters = shooters }
+      Scores scores -> accum { scores = scores }
+      InfoMetadata infoMetadata -> accum { infoMetadata = infoMetadata }
+      _ -> accum
+    ) emptyReport reportFields
+
+data ReportFields
+  = Title !Text
+  | Summary !Text
+  | Shooters ![Shooter]
+  | Scores ![Score]
+  | Stages ![[(String, String)]]
+  | ZMetadata !Text
+  | InfoMetadata ![Text]
+  deriving stock (Show, Eq)
+
 parseReport :: String -> Either (ParseErrorBundle String Void) Report
 parseReport fileContent =
   runParser
     report
     mempty
     fileContent
+
+parseReportFields :: String -> Either (ParseErrorBundle String Void) [ReportFields]
+parseReportFields fileContent =
+  runParser (many reportFields) mempty fileContent
+
+reportFields :: Parser ReportFields
+reportFields =
+  ((Title <<< toText) <$> title)
+    <|> ((InfoMetadata <<< (fmap toText)) <$> info)
+    <|> (Summary <$> matchSummary)
+    <|> ((ZMetadata <<< toText) <$> zMetadata)
+    <|> (Shooters <$> decodeShooters)
+    <|> (Stages <$> stagesWithFieldName)
+    <|> (Scores <$> decodeScores)
 
 report :: Parser Report
 report = do
@@ -43,14 +90,12 @@ report = do
   shooters <- decodeShooters
   _ <- stagesWithFieldName
   scores <- decodeScores
-  -- end
-  -- pure () <|> eof <|> (eol *> pure ())
   pure
     Report
       { summary,
         shooters,
         scores,
-        infoMetadata = info
+        infoMetadata = fmap toText info
       }
 
 matchSummary :: Parser Text
@@ -59,24 +104,22 @@ matchSummary = matchIdentifier *> (fmap toText $ manyTill anySingle newline)
 matchIdentifier :: Parser ()
 matchIdentifier = lineStartingWith "A "
 
-zMetadata :: Parser Text
-zMetadata = zMetadataIdentifier *> (fmap toText $ manyTill anySingle newline)
+zMetadata :: Parser String
+zMetadata = zMetadataIdentifier *> (manyTill anySingle newline)
 
 zMetadataIdentifier :: Parser ()
 zMetadataIdentifier = lineStartingWith "Z "
 
-info :: Parser [Text]
+info :: Parser [String]
 info =
-  many
-    ( infoIdentifier
-        *> (fmap toText $ manyTill anySingle newline)
-    )
+  some
+    (infoIdentifier *> (manyTill anySingle newline))
 
 infoIdentifier :: Parser ()
 infoIdentifier = lineStartingWith "$INFO "
 
-title :: Parser Text
-title = titleIdentifier *> (fmap toText $ manyTill anySingle newline)
+title :: Parser String
+title = titleIdentifier *> (manyTill anySingle newline)
 
 titleIdentifier :: Parser ()
 titleIdentifier = lineStartingWith "$PRACTISCORE "
