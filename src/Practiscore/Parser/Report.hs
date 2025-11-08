@@ -1,6 +1,14 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Practiscore.Parser.Report where
+module Practiscore.Parser.Report
+  ( Report (..),
+    parseReport,
+    title,
+    info,
+    zMetadata,
+    matchSummary,
+  )
+where
 
 import Control.Applicative.Combinators (manyTill)
 import Practiscore.Parser (Parser, lineStartingWith)
@@ -35,7 +43,8 @@ report = do
   shooters <- decodeShooters
   _ <- stagesWithFieldName
   scores <- decodeScores
-  pure ()
+  -- end
+  -- pure () <|> eof <|> (eol *> pure ())
   pure
     Report
       { summary,
@@ -57,9 +66,11 @@ zMetadataIdentifier :: Parser ()
 zMetadataIdentifier = lineStartingWith "Z "
 
 info :: Parser [Text]
-info = many $ do
-  infoIdentifier
-  fmap toText $ manyTill anySingle newline
+info =
+  many
+    ( infoIdentifier
+        *> (fmap toText $ manyTill anySingle newline)
+    )
 
 infoIdentifier :: Parser ()
 infoIdentifier = lineStartingWith "$INFO "
