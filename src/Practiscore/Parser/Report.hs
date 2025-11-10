@@ -1,25 +1,34 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Practiscore.Parser.Report
   ( Report (..),
     ReportFields (..),
     reportFields,
-    parseReport,
     title,
     info,
+    infoLine,
     zMetadata,
     matchSummary,
-    reportFieldsToReport,
-    parseReportFields
+    parseReportFields,
+    toShooters,
   )
 where
 
+import Conduit (ConduitT, MonadUnliftIO, ResourceT, (.|))
+import Conduit qualified
 import Control.Applicative.Combinators (manyTill)
 import Practiscore.Parser (Parser, lineStartingWith)
-import Practiscore.Parser.Score (Score, decodeScores)
-import Practiscore.Parser.Shooter (Shooter, decodeShooters)
-import Practiscore.Parser.Stage (stagesWithFieldName)
-import Text.Megaparsec (anySingle, runParser)
+import Practiscore.Parser.Score (Score, scoreHeader, scoreLine)
+import Practiscore.Parser.Shooter
+  ( Shooter (..),
+    shooterHeaderLine,
+    shooterLine,
+    shooterWithFieldNames,
+    decodeShooter
+  )
+import Practiscore.Parser.Stage (stageHeaderLine, stageLine)
+import Text.Megaparsec (anySingle, eof, runParser)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
@@ -31,81 +40,70 @@ data Report = Report
   }
   deriving stock (Show)
 
-emptyReport :: Report
-emptyReport = Report 
-  { summary = "",
-    shooters = [],
-    scores = [],
-    infoMetadata = []
-  }
-
-reportFieldsToReport :: [ReportFields] -> Report
-reportFieldsToReport reportFields = 
-  foldr (\fields accum -> 
-    case fields of
-      Summary summary -> accum { summary = summary }
-      Shooters shooters -> accum { shooters = shooters }
-      Scores scores -> accum { scores = scores }
-      InfoMetadata infoMetadata -> accum { infoMetadata = infoMetadata }
-      _ -> accum
-    ) emptyReport reportFields
-
 data ReportFields
   = Title !Text
-  | Summary !Text
-  | Shooters ![Shooter]
-  | Scores ![Score]
-  | Stages ![[(String, String)]]
+  | InfoMetadata !Text
   | ZMetadata !Text
-  | InfoMetadata ![Text]
+  | Summary !Text
+  | ShooterHeaderLine ![Text]
+  | ShooterLine ![Text]
+  | StageHeaderLine ![Text]
+  | StageLine ![Text]
+  | ScoreHeaderLine ![Text]
+  | ScoreLine ![Text]
+  | End
   deriving stock (Show, Eq)
 
-parseReport :: String -> Either (ParseErrorBundle String Void) Report
-parseReport fileContent =
-  runParser
-    report
-    mempty
-    fileContent
-
-parseReportFields :: String -> Either (ParseErrorBundle String Void) [ReportFields]
+parseReportFields :: String -> Either (ParseErrorBundle String Void) ReportFields
 parseReportFields fileContent =
-  runParser (many reportFields) mempty fileContent
+  runParser (reportFields) mempty fileContent
+
+toShooters ::
+  (MonadUnliftIO m) =>
+  ConduitT () ReportFields (ResourceT m) () ->
+  m [Shooter]
+toShooters reportFieldsStream = do
+  Conduit.runConduitRes $
+    reportFieldsStream
+      .| shooterParser
+      .| shooterWithFieldNames
+      .| decodeShooter
+      .| Conduit.sinkList
+  where
+    shooterParser :: (Monad m) => ConduitT ReportFields ([Text], [Text]) m ()
+    shooterParser = Conduit.concatMapAccumC shooterStepParser Nothing
+
+    shooterStepParser :: ReportFields -> Maybe [Text] -> (Maybe [Text], [([Text], [Text])])
+    shooterStepParser (ShooterHeaderLine header) _
+      | not (null header) = (Just header, [])
+    shooterStepParser (ShooterLine line) currentHeader
+      | not (null line),
+        Just header <- currentHeader =
+          (currentHeader, [(header, line)])
+    shooterStepParser _ currentHeader = (currentHeader, [])
 
 reportFields :: Parser ReportFields
 reportFields =
   ((Title <<< toText) <$> title)
-    <|> ((InfoMetadata <<< (fmap toText)) <$> info)
-    <|> (Summary <$> matchSummary)
+    <|> ((InfoMetadata <<< toText) <$> infoLine)
+    <|> ((Summary <<< toText) <$> matchSummary)
     <|> ((ZMetadata <<< toText) <$> zMetadata)
-    <|> (Shooters <$> decodeShooters)
-    <|> (Stages <$> stagesWithFieldName)
-    <|> (Scores <$> decodeScores)
+    <|> ((ShooterHeaderLine <<< (fmap toText)) <$> shooterHeaderLine)
+    <|> ((ShooterLine <<< (fmap toText)) <$> shooterLine)
+    <|> ((StageHeaderLine <<< (fmap toText)) <$> stageHeaderLine)
+    <|> ((StageLine <<< (fmap toText)) <$> stageLine)
+    <|> ((ScoreHeaderLine <<< (fmap toText)) <$> scoreHeader)
+    <|> ((ScoreLine <<< (fmap toText)) <$> scoreLine)
+    <|> (pure End)
 
-report :: Parser Report
-report = do
-  _ <- title
-  info <- info
-  _ <- zMetadata
-  summary <- matchSummary
-  shooters <- decodeShooters
-  _ <- stagesWithFieldName
-  scores <- decodeScores
-  pure
-    Report
-      { summary,
-        shooters,
-        scores,
-        infoMetadata = fmap toText info
-      }
-
-matchSummary :: Parser Text
-matchSummary = matchIdentifier *> (fmap toText $ manyTill anySingle newline)
+matchSummary :: Parser String
+matchSummary = matchIdentifier *> (manyTill anySingle eof)
 
 matchIdentifier :: Parser ()
 matchIdentifier = lineStartingWith "A "
 
 zMetadata :: Parser String
-zMetadata = zMetadataIdentifier *> (manyTill anySingle newline)
+zMetadata = zMetadataIdentifier *> (manyTill anySingle eof)
 
 zMetadataIdentifier :: Parser ()
 zMetadataIdentifier = lineStartingWith "Z "
@@ -115,11 +113,14 @@ info =
   some
     (infoIdentifier *> (manyTill anySingle newline))
 
+infoLine :: Parser String
+infoLine = infoIdentifier *> (manyTill anySingle eof)
+
 infoIdentifier :: Parser ()
 infoIdentifier = lineStartingWith "$INFO "
 
 title :: Parser String
-title = titleIdentifier *> (manyTill anySingle newline)
+title = titleIdentifier *> (manyTill anySingle eof)
 
 titleIdentifier :: Parser ()
 titleIdentifier = lineStartingWith "$PRACTISCORE "

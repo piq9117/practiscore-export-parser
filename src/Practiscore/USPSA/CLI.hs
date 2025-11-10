@@ -1,18 +1,28 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Practiscore.USPSA.CLI where
+module Practiscore.USPSA.CLI (streamRawReport) where
 
-import Control.Exception (throwIO)
-import Practiscore.Parser.Report (Report, parseReport)
+import Conduit (ConduitT, MonadResource, MonadThrow, (.|))
+import Conduit qualified
+import Practiscore.Parser.Report (ReportFields, parseReportFields)
+import Text.Megaparsec.Error (errorBundlePretty)
 
 data ParseError = ParseError Text
   deriving stock (Show)
 
 instance Exception ParseError
 
-readReport :: FilePath -> IO Report
-readReport filePath = do
-  fileContent <- readFileBS filePath
-  case parseReport (decodeUtf8 fileContent) of
-    Left _err -> throwIO (ParseError $ "error parsing file: " <> show filePath)
-    Right report -> pure report
+streamRawReport ::
+  (MonadThrow m, MonadResource m) =>
+  FilePath ->
+  ConduitT a ReportFields m ()
+streamRawReport filePath =
+  Conduit.sourceFile filePath
+    .| Conduit.linesUnboundedAsciiC
+    .| Conduit.mapMC
+      ( \rawReport ->
+          case parseReportFields $ decodeUtf8 rawReport of
+            Left err ->
+              Conduit.throwM (ParseError $ toText $ errorBundlePretty err)
+            Right reportField -> pure reportField
+      )

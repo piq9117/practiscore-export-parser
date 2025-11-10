@@ -3,16 +3,12 @@
 module Spec.Parser.Shooter (testTree) where
 
 import Practiscore.Parser.Shooter
-  ( Shooter (..),
-    cell,
+  ( cell,
     cells,
-    parseShooters,
-    shooterHeader,
+    shooterHeaderLine,
     shooterLine,
     shooterLineIdentifier,
-    shootersWithFieldName,
   )
-import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
@@ -31,13 +27,15 @@ shooterParserSpec =
       (runParser cell mempty "USPSANUMBER123") `shouldBe` (Right "USPSANUMBER123")
     it "cells" $
       (runParser cells mempty "first name,last name,USPSANUMBER123") `shouldBe` (Right ["first name", "last name", "USPSANUMBER123"])
+
     it "shooterLine" $
       shouldBe
-        (runParser shooterLine mempty (shooterLineData <> "\n"))
+        (runParser shooterLine mempty shooterLineData)
         (Right ["1", "uspsa-member-number", "first-name", "last-name", "No", "No", "No", "No", "B", "Carry Optics", "568.8844", "1", "Minor", "Open", "Major", "", "No", "", "Open", "Minor", "", "No", "", "No", "", "", "", "", "", "", "", "", "", "No", "", "No", "No"])
+
     it "header" $ do
       shouldBe
-        (runParser shooterHeader mempty (header <> "\n"))
+        (runParser shooterHeaderLine mempty header)
         ( Right
             [ "Comp",
               "USPSA",
@@ -76,96 +74,6 @@ shooterParserSpec =
               "Age",
               "Law",
               "Military"
-            ]
-        )
-
-    it "shootersWithFieldName" $ do
-      shouldBe
-        (runParser shootersWithFieldName mempty (header <> "\n" <> shooterLineData <> "\n"))
-        ( Right
-            [ [ ("Comp", "1"),
-                ("USPSA", "uspsa-member-number"),
-                ("FirstName", "first-name"),
-                ("LastName", "last-name"),
-                ("DQPistol", "No"),
-                ("DQRifle", "No"),
-                ("DQShotgun", "No"),
-                ("Reentry", "No"),
-                ("Class", "B"),
-                ("Division", "Carry Optics"),
-                ("Match Points", "568.8844"),
-                ("Place Overall", "1"),
-                ("Power Factor", "Minor"),
-                ("Shotgun Division", "Open"),
-                ("Shotgun Power Factor", "Major"),
-                ("Shotgun Place Overall", ""),
-                ("Shotgun Entered", "No"),
-                ("Shotgun Match Points", ""),
-                ("Rifle Division", "Open"),
-                ("Rifle Power Factor", "Minor"),
-                ("Rifle Place Overall", ""),
-                ("Rifle Entered", "No"),
-                ("Rifle Match Points", ""),
-                ("Aggregate", "No"),
-                ("Aggregate Division", ""),
-                ("Aggregate Pistol Percent", ""),
-                ("Aggregate Pistol Points", ""),
-                ("Aggregate Place", ""),
-                ("Aggregate Rifle Percent", ""),
-                ("Aggregate Rifle Points", ""),
-                ("Aggregate Shotgun Percent", ""),
-                ("Aggregate Shotgun Points", ""),
-                ("Aggregate Total", ""),
-                ("Female", "No"),
-                ("Age", ""),
-                ("Law", "No"),
-                ("Military", "No")
-              ]
-            ]
-        )
-    it "shooter" $ do
-      shouldBe
-        (parseShooters (header <> "\n" <> shooterLineData <> "\n"))
-        ( Right
-            [ Shooter
-                { comp = Just CompId {unCompId = 1},
-                  uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
-                  firstname = "first-name",
-                  lastname = "last-name",
-                  dqpistol = "No",
-                  dqrifle = "No",
-                  dqshotgun = "No",
-                  reentry = "No",
-                  class_ = "B",
-                  division = "Carry Optics",
-                  matchPoints = "568.8844",
-                  placeOverall = "1",
-                  powerFactor = "Minor",
-                  shotgunDivision = "Open",
-                  shotgunPowerFactor = "Major",
-                  shotgunPlaceOverall = "",
-                  shotgunEntered = "No",
-                  shotgunMatchPoints = "",
-                  rifleDivision = "Open",
-                  riflePowerFactor = "Minor",
-                  riflePlaceOverall = "",
-                  rifleEntered = "No",
-                  rifleMatchPoints = "",
-                  aggregate = "No",
-                  aggregateDivision = "",
-                  aggregatePistolPercent = "",
-                  aggregatePistolPoints = "",
-                  aggregatePlace = "",
-                  aggregateRiflePercent = "",
-                  aggregateRiflePoints = "",
-                  aggregateShotgunPercent = "",
-                  aggregateShotgunPoints = "",
-                  aggregateTotal = "",
-                  female = "No",
-                  age = "",
-                  law = "No",
-                  military = "No"
-                }
             ]
         )
 
