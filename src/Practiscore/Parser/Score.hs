@@ -7,14 +7,13 @@ module Practiscore.Parser.Score
     scoresWithFieldName,
     decodeScores,
     parseScores,
+    scoreLine,
   )
 where
 
--- import Control.Applicative.Combinators (sepEndBy)
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Practiscore.USPSA (CompId (..))
-import Text.Megaparsec (runParser)
-import Text.Megaparsec.Char (newline)
+import Text.Megaparsec (eof, runParser)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Score = Score
@@ -150,13 +149,13 @@ scoreLines :: Parser [[String]]
 scoreLines = many scoreLine
 
 scoreLine :: Parser [String]
-scoreLine = scoreLineIdentifier *> cells <* newline
+scoreLine = scoreLineIdentifier *> cells <* eof
 
 scoreLineIdentifier :: Parser ()
 scoreLineIdentifier = lineStartingWith "I "
 
 scoreHeader :: Parser [String]
-scoreHeader = scoreHeaderIdentifier *> cells <* newline
+scoreHeader = scoreHeaderIdentifier *> cells <* eof
 
 scoreHeaderIdentifier :: Parser ()
 scoreHeaderIdentifier = lineStartingWith "H "

@@ -4,15 +4,22 @@ module Practiscore.Parser.Stage
     stageLines,
     stagesWithFieldName,
     stageLineIdentifier,
+    stageHeaderLine,
+    stageLine,
   )
 where
 
 import Practiscore.Parser (Parser, cells, lineStartingWith)
+import Text.Megaparsec (eof)
 import Text.Megaparsec.Char (newline)
 
 stageHeader :: Parser [String]
 stageHeader =
   stageHeaderIdentifier *> cells <* newline
+
+stageHeaderLine :: Parser [String]
+stageHeaderLine =
+  stageHeaderIdentifier *> cells <* eof
 
 stageHeaderIdentifier :: Parser ()
 stageHeaderIdentifier = lineStartingWith "F "
@@ -29,7 +36,7 @@ stageLines :: Parser [[String]]
 stageLines = many stageLine
 
 stageLine :: Parser [String]
-stageLine = stageLineIdentifier *> cells <* newline
+stageLine = stageLineIdentifier *> cells <* eof
 
 stageLineIdentifier :: Parser ()
 stageLineIdentifier = lineStartingWith "G "

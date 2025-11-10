@@ -71,6 +71,7 @@ library
     , base
     , bytestring
     , cassava
+    , conduit
     , megaparsec
     , optparse-applicative
     , parser-combinators

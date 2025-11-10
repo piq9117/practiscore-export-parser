@@ -2,7 +2,6 @@
 
 module Practiscore.CLI (CLI (..), parseCLI) where
 
-import Control.Exception (throwIO)
 import Options.Applicative
   ( Parser,
     ParserInfo,
@@ -17,9 +16,6 @@ import Options.Applicative
     showHelpOnError,
     strOption,
   )
-import Practiscore.Parser.Shooter (toUspsaMemberId)
-import Practiscore.USPSA.CLI qualified
-import Practiscore.USPSA.Match (encodeMatch, getShooterFromReport)
 
 data CLI = CLI
   { uspsaMemberId :: Text,
@@ -56,12 +52,8 @@ instance Exception CliParseErrors
 
 parseCLI :: IO ()
 parseCLI = do
-  cli <- showHelpOnErrorOnExecParser (info (helper <*> cli) fullDesc)
-  report <- Practiscore.USPSA.CLI.readReport cli.reportPath
-  case toUspsaMemberId cli.uspsaMemberId of
-    Nothing -> throwIO (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid id")
-    Just uspsaMemberId ->
-      writeFileBS cli.output (toStrict $ encodeMatch $ getShooterFromReport uspsaMemberId report)
+  _cli <- showHelpOnErrorOnExecParser (info (helper <*> cli) fullDesc)
+  pure ()
 
 showHelpOnErrorOnExecParser :: ParserInfo a -> IO a
 showHelpOnErrorOnExecParser = customExecParser (prefs showHelpOnError)
