@@ -12,7 +12,7 @@ module Practiscore.Parser.Shooter
     shooterHeaderLine,
     emptyShooter,
     shooterWithFieldNames,
-    decodeShooter
+    decodeShooter,
   )
 where
 

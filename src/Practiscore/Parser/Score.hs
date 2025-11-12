@@ -1,20 +1,24 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Practiscore.Parser.Score
   ( Score (..),
     scoreHeader,
     scoreHeaderIdentifier,
     scoresWithFieldName,
-    decodeScores,
-    parseScores,
     scoreLine,
+    emptyScore,
+    scoreWithFieldNames,
+    decodeScore,
   )
 where
 
+import Conduit (ConduitT)
+import Conduit qualified
+import Data.Conduit.Lift (evalStateC)
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Practiscore.USPSA (CompId (..))
-import Text.Megaparsec (eof, runParser)
-import Text.Megaparsec.Error (ParseErrorBundle)
+import Text.Megaparsec (eof)
 
 data Score = Score
   { gun :: Text,
@@ -89,54 +93,6 @@ emptyScore =
       stagePowerFactor = Nothing
     }
 
-parseScores :: String -> Either (ParseErrorBundle String Void) [Score]
-parseScores input = runParser decodeScores mempty input
-
-decodeScores :: Parser [Score]
-decodeScores = do
-  scores <- scoresWithFieldName
-  pure $
-    scores <&> \score ->
-      foldr
-        ( \(header, cell) accum ->
-            case header of
-              "Gun" -> accum {gun = toText cell}
-              "Stage" -> accum {stage = readMaybe (toString cell)}
-              "Comp" -> accum {comp = fmap CompId $ readMaybe (toString cell)}
-              "DQ" -> accum {dQ = toText cell}
-              "DNF" -> accum {dNF = toText cell}
-              "A" -> accum {a = fromMaybe 0 $ readMaybe (toString cell)}
-              "B" -> accum {b = fromMaybe 0 $ readMaybe (toString cell)}
-              "C" -> accum {c = fromMaybe 0 $ readMaybe (toString cell)}
-              "D" -> accum {d = fromMaybe 0 $ readMaybe (toString cell)}
-              "Miss" -> accum {miss = fromMaybe 0 $ readMaybe (toString cell)}
-              "No Shoot" -> accum {noShoot = fromMaybe 0 $ readMaybe (toString cell)}
-              "Procedural" -> accum {procedural = fromMaybe 0 $ readMaybe (toString cell)}
-              "Double Poppers" -> accum {doublePoppers = fromMaybe 0 $ readMaybe (toString cell)}
-              "Double Popper Miss" -> accum {doublePopperMiss = fromMaybe 0 $ readMaybe (toString cell)}
-              "Late Shot" -> accum {lateShot = fromMaybe 0 $ readMaybe (toString cell)}
-              "Extra Shot" -> accum {extraShot = fromMaybe 0 $ readMaybe (toString cell)}
-              "Extra Hit" -> accum {extraHit = fromMaybe 0 $ readMaybe (toString cell)}
-              "No Penalty Miss" -> accum {noPenaltyMiss = fromMaybe 0 $ readMaybe (toString cell)}
-              "Additional Penalty" -> accum {additionalPenalty = fromMaybe 0 $ readMaybe (toString cell)}
-              "Total Penalty" -> accum {totalPenalty = fromMaybe 0 $ readMaybe (toString cell)}
-              "T1" -> accum {t1 = readMaybe (toString cell)}
-              "T2" -> accum {t2 = readMaybe (toString cell)}
-              "T3" -> accum {t3 = readMaybe (toString cell)}
-              "T4" -> accum {t4 = readMaybe (toString cell)}
-              "T5" -> accum {t5 = readMaybe (toString cell)}
-              "Time" -> accum {time = readMaybe (toString cell)}
-              "Raw Points" -> accum {rawPoints = readMaybe (toString cell)}
-              "Total Points" -> accum {totalPoints = readMaybe (toString cell)}
-              "Hit Factor" -> accum {hitFactor = readMaybe (toString cell)}
-              "Stage Points" -> accum {stagePoints = readMaybe (toString cell)}
-              "Stage Place" -> accum {stagePlace = readMaybe (toString cell)}
-              "Stage Power Factor" -> accum {stagePowerFactor = readMaybe (toString cell)}
-              _ -> accum
-        )
-        emptyScore
-        score
-
 scoresWithFieldName :: Parser [[(String, String)]]
 scoresWithFieldName = do
   header <- scoreHeader
@@ -160,8 +116,57 @@ scoreHeader = scoreHeaderIdentifier *> cells <* eof
 scoreHeaderIdentifier :: Parser ()
 scoreHeaderIdentifier = lineStartingWith "H "
 
--- cells :: Parser [Text]
--- cells = sepEndBy cell (char ',')
---
--- cell :: Parser Text
--- cell = takeWhileP (Just "field") (/= ',')
+scoreWithFieldNames :: (Monad m) => ConduitT ([String], [String]) [(String, String)] m ()
+scoreWithFieldNames = Conduit.concatMapAccumC scoreStepWithFieldNames [[]]
+  where
+    scoreStepWithFieldNames :: ([String], [String]) -> [[(String, String)]] -> ([[(String, String)]], [[(String, String)]])
+    scoreStepWithFieldNames (header, line) accum
+      | not (null header),
+        not (null line) =
+          (accum, [zipWith (\h l -> (h, l)) header line])
+    scoreStepWithFieldNames _ accum = (accum, [])
+
+decodeScore :: (Monad m) => ConduitT [(String, String)] Score m ()
+decodeScore = evalStateC emptyScore $ Conduit.awaitForever $ \keyValPair -> do
+  for_ keyValPair $ \(header, val) ->
+    case header of
+      "Gun" -> modify (\score -> score {gun = toText val})
+      "Stage" -> modify (\score -> score {stage = readMaybe val})
+      "Comp" ->
+        modify
+          ( \score ->
+              let Score {..} = score
+               in Score {comp = fmap CompId $ readMaybe (toString val), ..}
+          )
+      "DQ" -> modify (\score -> score {dQ = toText val})
+      "DNF" -> modify (\score -> score {dNF = toText val})
+      "A" -> modify (\score -> score {a = fromMaybe 0 $ readMaybe val})
+      "B" -> modify (\score -> score {b = fromMaybe 0 $ readMaybe val})
+      "C" -> modify (\score -> score {c = fromMaybe 0 $ readMaybe val})
+      "D" -> modify (\score -> score {d = fromMaybe 0 $ readMaybe val})
+      "Miss" -> modify (\score -> score {miss = fromMaybe 0 $ readMaybe val})
+      "No Shoot" -> modify (\score -> score {noShoot = fromMaybe 0 $ readMaybe val})
+      "Procedural" -> modify (\score -> score {procedural = fromMaybe 0 $ readMaybe val})
+      "Double Poppers" -> modify (\score -> score {doublePopperMiss = fromMaybe 0 $ readMaybe val})
+      "Double Popper Miss" -> modify (\score -> score {doublePopperMiss = fromMaybe 0 $ readMaybe val})
+      "Late Shot" -> modify (\score -> score {lateShot = fromMaybe 0 $ readMaybe val})
+      "Extra Shot" -> modify (\score -> score {extraShot = fromMaybe 0 $ readMaybe val})
+      "Extra Hit" -> modify (\score -> score {extraHit = fromMaybe 0 $ readMaybe val})
+      "No Penalty Miss" -> modify (\score -> score {noPenaltyMiss = fromMaybe 0 $ readMaybe val})
+      "Additional Penalty" -> modify (\score -> score {additionalPenalty = fromMaybe 0 $ readMaybe val})
+      "Total Penalty" -> modify (\score -> score {totalPenalty = fromMaybe 0 $ readMaybe val})
+      "T1" -> modify (\score -> score {t1 = readMaybe val})
+      "T2" -> modify (\score -> score {t2 = readMaybe val})
+      "T3" -> modify (\score -> score {t3 = readMaybe val})
+      "T4" -> modify (\score -> score {t4 = readMaybe val})
+      "T5" -> modify (\score -> score {t5 = readMaybe val})
+      "Time" -> modify (\score -> score {time = readMaybe val})
+      "Raw Points" -> modify (\score -> score {rawPoints = readMaybe val})
+      "Total Points" -> modify (\score -> score {totalPoints = readMaybe val})
+      "Hit Factor" -> modify (\score -> score {hitFactor = readMaybe val})
+      "Stage Points" -> modify (\score -> score {stagePoints = readMaybe val})
+      "Stage Place" -> modify (\score -> score {stagePlace = readMaybe val})
+      "Stage Power Factor" -> modify (\score -> score {stagePowerFactor = readMaybe val})
+      _ -> pure ()
+  score <- get
+  Conduit.yield score

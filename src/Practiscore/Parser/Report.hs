@@ -1,4 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Practiscore.Parser.Report
@@ -12,6 +14,7 @@ module Practiscore.Parser.Report
     matchSummary,
     parseReportFields,
     toShooters,
+    toScores,
   )
 where
 
@@ -19,13 +22,19 @@ import Conduit (ConduitT, MonadUnliftIO, ResourceT, (.|))
 import Conduit qualified
 import Control.Applicative.Combinators (manyTill)
 import Practiscore.Parser (Parser, lineStartingWith)
-import Practiscore.Parser.Score (Score, scoreHeader, scoreLine)
+import Practiscore.Parser.Score
+  ( Score (..),
+    decodeScore,
+    scoreHeader,
+    scoreLine,
+    scoreWithFieldNames,
+  )
 import Practiscore.Parser.Shooter
   ( Shooter (..),
+    decodeShooter,
     shooterHeaderLine,
     shooterLine,
     shooterWithFieldNames,
-    decodeShooter
   )
 import Practiscore.Parser.Stage (stageHeaderLine, stageLine)
 import Text.Megaparsec (anySingle, eof, runParser)
@@ -49,8 +58,8 @@ data ReportFields
   | ShooterLine ![Text]
   | StageHeaderLine ![Text]
   | StageLine ![Text]
-  | ScoreHeaderLine ![Text]
-  | ScoreLine ![Text]
+  | ScoreHeaderLine ![String]
+  | ScoreLine ![String]
   | End
   deriving stock (Show, Eq)
 
@@ -82,6 +91,26 @@ toShooters reportFieldsStream = do
           (currentHeader, [(header, line)])
     shooterStepParser _ currentHeader = (currentHeader, [])
 
+toScores :: (MonadUnliftIO m) => ConduitT () ReportFields (ResourceT m) () -> m ()
+toScores reportFieldsStream =
+  Conduit.runConduitRes $
+    reportFieldsStream
+      .| scoreParser
+      .| scoreWithFieldNames
+      .| decodeScore
+      .| Conduit.mapM_C (print @String <<< show)
+  where
+    scoreParser = Conduit.concatMapAccumC scoreStepParser Nothing
+
+    scoreStepParser :: ReportFields -> Maybe [String] -> (Maybe [String], [([String], [String])])
+    scoreStepParser (ScoreHeaderLine header) _
+      | not (null header) = (Just header, [])
+    scoreStepParser (ScoreLine line) currentHeader
+      | not (null line),
+        Just header <- currentHeader =
+          (currentHeader, [(header, line)])
+    scoreStepParser _ currentHeader = (currentHeader, [])
+
 reportFields :: Parser ReportFields
 reportFields =
   ((Title <<< toText) <$> title)
@@ -92,8 +121,8 @@ reportFields =
     <|> ((ShooterLine <<< (fmap toText)) <$> shooterLine)
     <|> ((StageHeaderLine <<< (fmap toText)) <$> stageHeaderLine)
     <|> ((StageLine <<< (fmap toText)) <$> stageLine)
-    <|> ((ScoreHeaderLine <<< (fmap toText)) <$> scoreHeader)
-    <|> ((ScoreLine <<< (fmap toText)) <$> scoreLine)
+    <|> (ScoreHeaderLine <$> scoreHeader)
+    <|> (ScoreLine <$> scoreLine)
     <|> (pure End)
 
 matchSummary :: Parser String
