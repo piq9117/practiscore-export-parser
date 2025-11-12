@@ -91,14 +91,14 @@ toShooters reportFieldsStream = do
           (currentHeader, [(header, line)])
     shooterStepParser _ currentHeader = (currentHeader, [])
 
-toScores :: (MonadUnliftIO m) => ConduitT () ReportFields (ResourceT m) () -> m ()
+toScores :: (MonadUnliftIO m) => ConduitT () ReportFields (ResourceT m) () -> m [Score]
 toScores reportFieldsStream =
   Conduit.runConduitRes $
     reportFieldsStream
       .| scoreParser
       .| scoreWithFieldNames
       .| decodeScore
-      .| Conduit.mapM_C (print @String <<< show)
+      .| Conduit.sinkList
   where
     scoreParser = Conduit.concatMapAccumC scoreStepParser Nothing
 

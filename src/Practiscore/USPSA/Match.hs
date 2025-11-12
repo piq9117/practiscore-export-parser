@@ -2,7 +2,7 @@
 
 module Practiscore.USPSA.Match
   ( Match (..),
-    getShooterFromReport,
+    getShooterMatch,
     encodeMatch,
   )
 where
@@ -15,8 +15,6 @@ import Data.Csv
     namedRecord,
     (.=),
   )
-import Practiscore.Parser.Report (Report)
-import Practiscore.Parser.Report qualified
 import Practiscore.Parser.Score qualified
 import Practiscore.Parser.Shooter qualified
 import Practiscore.USPSA (UspsaMemberId (..))
@@ -79,19 +77,20 @@ instance ToNamedRecord Match where
         "stage_place" .= export.score.stagePlace
       ]
 
-getShooterFromReport ::
+getShooterMatch :: 
   UspsaMemberId ->
-  Report ->
+  [Practiscore.Parser.Shooter.Shooter] -> 
+  [Practiscore.Parser.Score.Score] ->
   [Match]
-getShooterFromReport memberId report = do
-  case find (\shooter -> shooter.uspsa == Just memberId) report.shooters of
+getShooterMatch memberId shooters scores =
+  case find (\shooter -> shooter.uspsa == Just memberId) shooters of
     Nothing -> []
-    Just shooter ->
+    Just shooter -> 
       [ Match
           { shooter,
             score
           }
-        | score <- (filter (\score -> score.comp == shooter.comp) report.scores)
+        | score <- filter (\score -> score.comp == shooter.comp) scores
       ]
 
 encodeMatch :: [Match] -> LByteString
