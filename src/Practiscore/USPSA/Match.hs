@@ -77,15 +77,15 @@ instance ToNamedRecord Match where
         "stage_place" .= export.score.stagePlace
       ]
 
-getShooterMatch :: 
+getShooterMatch ::
   UspsaMemberId ->
-  [Practiscore.Parser.Shooter.Shooter] -> 
+  [Practiscore.Parser.Shooter.Shooter] ->
   [Practiscore.Parser.Score.Score] ->
   [Match]
 getShooterMatch memberId shooters scores =
   case find (\shooter -> shooter.uspsa == Just memberId) shooters of
     Nothing -> []
-    Just shooter -> 
+    Just shooter ->
       [ Match
           { shooter,
             score
