@@ -16,6 +16,13 @@ import Options.Applicative
     showHelpOnError,
     strOption,
   )
+import Practiscore.USPSA.CLI (streamRawReport)
+import Practiscore.Parser.Shooter (toUspsaMemberId)
+import Conduit qualified
+import Conduit ((.|), MonadThrow, MonadUnliftIO)
+import Practiscore.Parser.Report qualified
+import Control.Exception (throwIO)
+import Practiscore.USPSA.Match (getShooterMatch, encodeMatch)
 
 data CLI = CLI
   { uspsaMemberId :: Text,
@@ -50,10 +57,19 @@ data CliParseErrors
 
 instance Exception CliParseErrors
 
-parseCLI :: IO ()
+parseCLI :: (MonadUnliftIO m, MonadThrow m) => m ()
 parseCLI = do
-  _cli <- showHelpOnErrorOnExecParser (info (helper <*> cli) fullDesc)
-  pure ()
+  cli <- liftIO $ showHelpOnErrorOnExecParser (info (helper <*> cli) fullDesc)
+
+  Conduit.runConduitRes $  do
+    let stream = streamRawReport cli.reportPath
+    shooters <- lift $ Practiscore.Parser.Report.toShooters stream
+    scores <- lift $ Practiscore.Parser.Report.toScores stream
+    case toUspsaMemberId cli.uspsaMemberId of
+      Nothing -> liftIO $ throwIO (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid")
+      Just uspsaMemberId -> 
+        Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId shooters scores)
+          .| Conduit.sinkFile cli.output
 
 showHelpOnErrorOnExecParser :: ParserInfo a -> IO a
 showHelpOnErrorOnExecParser = customExecParser (prefs showHelpOnError)
