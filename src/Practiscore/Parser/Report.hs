@@ -21,7 +21,7 @@ where
 import Conduit (ConduitT, MonadUnliftIO, ResourceT, (.|))
 import Conduit qualified
 import Control.Applicative.Combinators (manyTill)
-import Practiscore.Parser (Parser, lineStartingWith)
+import Practiscore.Parser (ParseError, Parser, lineStartingWith, prettifyParseError)
 import Practiscore.Parser.Score
   ( Score (..),
     decodeScore,
@@ -39,7 +39,6 @@ import Practiscore.Parser.Shooter
 import Practiscore.Parser.Stage (stageHeaderLine, stageLine)
 import Text.Megaparsec (anySingle, eof, runParser)
 import Text.Megaparsec.Char (newline)
-import Text.Megaparsec.Error (ParseErrorBundle)
 
 data Report = Report
   { summary :: !Text,
@@ -63,9 +62,9 @@ data ReportFields
   | End
   deriving stock (Show, Eq)
 
-parseReportFields :: String -> Either (ParseErrorBundle String Void) ReportFields
+parseReportFields :: String -> Either ParseError ReportFields
 parseReportFields fileContent =
-  runParser (reportFields) mempty fileContent
+  bimap prettifyParseError identity $ runParser (reportFields) mempty fileContent
 
 toShooters ::
   (MonadUnliftIO m) =>

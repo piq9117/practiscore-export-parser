@@ -5,7 +5,6 @@ module Practiscore.USPSA.CLI (streamRawReport) where
 import Conduit (ConduitT, MonadResource, MonadThrow, (.|))
 import Conduit qualified
 import Practiscore.Parser.Report (ReportFields, parseReportFields)
-import Text.Megaparsec.Error (errorBundlePretty)
 
 data ParseError = ParseError Text
   deriving stock (Show)
@@ -22,7 +21,6 @@ streamRawReport filePath =
     .| Conduit.mapMC
       ( \rawReport ->
           case parseReportFields $ decodeUtf8 rawReport of
-            Left err ->
-              Conduit.throwM (ParseError $ toText $ errorBundlePretty err)
+            Left err -> Conduit.throwM err
             Right reportField -> pure reportField
       )
