@@ -1,5 +1,9 @@
+{-# LANGUAGE DerivingStrategies #-}
+
 module Practiscore.Parser
   ( Parser,
+    ParseError (..),
+    prettifyParseError,
     lineStartingWith,
     cell,
     cells,
@@ -9,6 +13,7 @@ where
 import Control.Monad.Combinators (sepBy)
 import Text.Megaparsec (Parsec, noneOf, notFollowedBy, try)
 import Text.Megaparsec.Char (char, string)
+import Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 
 type Parser = Parsec Void String
 
@@ -23,3 +28,11 @@ cells =
 
 cell :: Parser String
 cell = many (noneOf @[] ",\n\r")
+
+data ParseError = ParseError Text
+  deriving stock (Show)
+
+instance Exception ParseError
+
+prettifyParseError :: ParseErrorBundle String Void -> ParseError
+prettifyParseError parseError = ParseError (toText $ errorBundlePretty parseError)
