@@ -1,7 +1,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 
 module Practiscore.USPSA.Match
-  ( Match (..),
+  ( Match,
+    Stage (..),
     getShooterMatch,
     encodeMatch,
   )
@@ -15,17 +16,22 @@ import Data.Csv
     namedRecord,
     (.=),
   )
+import Practiscore.Parser.Report qualified
 import Practiscore.Parser.Score qualified
 import Practiscore.Parser.Shooter qualified
 import Practiscore.USPSA (UspsaMemberId (..))
 
-data Match = Match
+type Match = [Stage]
+
+data Stage = Stage
   { shooter :: Practiscore.Parser.Shooter.Shooter,
+    matchName :: Text,
+    matchDate :: Text,
     score :: Practiscore.Parser.Score.Score
   }
   deriving stock (Show)
 
-instance DefaultOrdered Match where
+instance DefaultOrdered Stage where
   headerOrder _ =
     header
       [ "uspsa_id",
@@ -48,10 +54,12 @@ instance DefaultOrdered Match where
         "raw_points",
         "total_points",
         "hit_factor",
-        "stage_place"
+        "stage_place",
+        "match_name",
+        "match_date"
       ]
 
-instance ToNamedRecord Match where
+instance ToNamedRecord Stage where
   toNamedRecord export =
     namedRecord
       [ "uspsa_id" .= fmap (.unUspsaMemberId) export.shooter.uspsa,
@@ -74,24 +82,29 @@ instance ToNamedRecord Match where
         "raw_points" .= export.score.rawPoints,
         "total_points" .= export.score.totalPoints,
         "hit_factor" .= export.score.hitFactor,
-        "stage_place" .= export.score.stagePlace
+        "stage_place" .= export.score.stagePlace,
+        "match_name" .= export.matchName,
+        "match_date" .= export.matchDate
       ]
 
 getShooterMatch ::
   UspsaMemberId ->
+  Practiscore.Parser.Report.MatchInfo ->
   [Practiscore.Parser.Shooter.Shooter] ->
   [Practiscore.Parser.Score.Score] ->
-  [Match]
-getShooterMatch memberId shooters scores =
+  Match
+getShooterMatch memberId matchInfo shooters scores =
   case find (\shooter -> shooter.uspsa == Just memberId) shooters of
     Nothing -> []
     Just shooter ->
-      [ Match
+      [ Stage
           { shooter,
-            score
+            score,
+            matchName = matchInfo.name,
+            matchDate = matchInfo.date
           }
         | score <- filter (\score -> score.comp == shooter.comp) scores
       ]
 
-encodeMatch :: [Match] -> LByteString
+encodeMatch :: [Stage] -> LByteString
 encodeMatch match = encodeDefaultOrderedByName match

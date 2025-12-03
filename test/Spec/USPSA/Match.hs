@@ -5,7 +5,7 @@ module Spec.USPSA.Match (testTree) where
 import Practiscore.Parser.Score (Score (..))
 import Practiscore.Parser.Shooter (Shooter (..))
 import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
-import Practiscore.USPSA.Match (Match (..), encodeMatch)
+import Practiscore.USPSA.Match (Stage (..), encodeMatch)
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
@@ -15,8 +15,10 @@ matchToCsvSpec =
   describe "Match" $ do
     it "encode Match to csv" $ do
       let match =
-            [ Match
-                { shooter =
+            [ Stage
+                { matchName = "test-match",
+                  matchDate = "11/01/2025",
+                  shooter =
                     Shooter
                       { comp = Just CompId {unCompId = 1},
                         uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
@@ -92,8 +94,10 @@ matchToCsvSpec =
                         stagePowerFactor = Nothing
                       }
                 },
-              Match
-                { shooter =
+              Stage
+                { matchName = "test-match",
+                  matchDate = "11/01/2025",
+                  shooter =
                     Shooter
                       { comp = Just CompId {unCompId = 1},
                         uspsa = Just UspsaMemberId {unUspsaMemberId = "uspsa-member-number"},
@@ -173,7 +177,7 @@ matchToCsvSpec =
 
       shouldBe
         (encodeMatch match)
-        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hit_factor,stage_place\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,2,0,0,0,0,20.54,136,136,6.6212,1\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2\r\n"
+        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hit_factor,stage_place,match_name,match_date\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,2,0,0,0,0,20.54,136,136,6.6212,1,test-match,11/01/2025\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2,test-match,11/01/2025\r\n"
 
 testTree :: IO TestTree
 testTree = testSpec "USPSA.Match" $ do
