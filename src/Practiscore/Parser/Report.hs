@@ -6,6 +6,7 @@
 module Practiscore.Parser.Report
   ( Report (..),
     ReportFields (..),
+    MatchInfo (..),
     reportFields,
     title,
     info,
@@ -15,12 +16,15 @@ module Practiscore.Parser.Report
     parseReportFields,
     toShooters,
     toScores,
+    toMatchInfo,
   )
 where
 
 import Conduit (ConduitT, MonadUnliftIO, ResourceT, (.|))
 import Conduit qualified
 import Control.Applicative.Combinators (manyTill)
+import Data.Conduit.Lift (evalStateC)
+import Data.Text qualified
 import Practiscore.Parser (ParseError, Parser, lineStartingWith, prettifyParseError)
 import Practiscore.Parser.Score
   ( Score (..),
@@ -66,17 +70,63 @@ parseReportFields :: String -> Either ParseError ReportFields
 parseReportFields fileContent =
   bimap prettifyParseError identity $ runParser (reportFields) mempty fileContent
 
-toShooters ::
+data MatchInfo = MatchInfo
+  { name :: Text,
+    date :: Text
+  }
+
+toMatchInfo ::
   (MonadUnliftIO m) =>
   ConduitT () ReportFields (ResourceT m) () ->
-  m [Shooter]
+  ConduitT () Void (ResourceT m) (Maybe MatchInfo)
+toMatchInfo reportFieldsStream = do
+  reportFieldsStream
+    .| Conduit.filterC
+      ( \reportFields ->
+          case reportFields of
+            InfoMetadata metadata ->
+              Data.Text.isInfixOf "match name" (Data.Text.toLower metadata)
+                || Data.Text.isInfixOf "match date" (Data.Text.toLower metadata)
+            _ -> False
+      )
+    .| accumMatchInfo
+    .| decodeMatchInfo
+    .| Conduit.headC
+  where
+    accumMatchInfo :: (Monad m) => ConduitT ReportFields [Text] m ()
+    accumMatchInfo = Conduit.concatMapAccumC step Nothing
+
+    step (InfoMetadata metadata) _ = (Just metadata, [])
+    step _ currentMetadata = (currentMetadata, [])
+
+    decodeMatchInfo :: (Monad m) => ConduitT [Text] MatchInfo m ()
+    decodeMatchInfo =
+      evalStateC (MatchInfo {name = "", date = ""}) $
+        Conduit.awaitForever $ \metadata -> do
+          modify
+            ( \state ->
+                state
+                  { name =
+                      fromMaybe "" $
+                        find (\metadata -> Data.Text.isInfixOf "match name" $ Data.Text.toLower metadata) metadata,
+                    date =
+                      fromMaybe "" $
+                        find (\metadata -> Data.Text.isInfixOf "match date" $ Data.Text.toLower metadata) metadata
+                  }
+            )
+          metadata <- get
+          Conduit.yield metadata
+
+toShooters ::
+  (Monad m) =>
+  ConduitT () ReportFields m () ->
+  ConduitT () Void m [Shooter]
 toShooters reportFieldsStream = do
-  Conduit.runConduitRes $
-    reportFieldsStream
-      .| shooterParser
-      .| shooterWithFieldNames
-      .| decodeShooter
-      .| Conduit.sinkList
+  reportFieldsStream
+    .| shooterParser
+    .| shooterWithFieldNames
+    .| decodeShooter
+    .| Conduit.sinkList
   where
     shooterParser :: (Monad m) => ConduitT ReportFields ([Text], [Text]) m ()
     shooterParser = Conduit.concatMapAccumC shooterStepParser Nothing
@@ -90,14 +140,16 @@ toShooters reportFieldsStream = do
           (currentHeader, [(header, line)])
     shooterStepParser _ currentHeader = (currentHeader, [])
 
-toScores :: (MonadUnliftIO m) => ConduitT () ReportFields (ResourceT m) () -> m [Score]
+toScores ::
+  (Monad m) =>
+  ConduitT () ReportFields m () ->
+  ConduitT () Void m [Score]
 toScores reportFieldsStream =
-  Conduit.runConduitRes $
-    reportFieldsStream
-      .| scoreParser
-      .| scoreWithFieldNames
-      .| decodeScore
-      .| Conduit.sinkList
+  reportFieldsStream
+    .| scoreParser
+    .| scoreWithFieldNames
+    .| decodeScore
+    .| Conduit.sinkList
   where
     scoreParser = Conduit.concatMapAccumC scoreStepParser Nothing
 

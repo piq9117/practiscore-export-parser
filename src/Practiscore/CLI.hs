@@ -53,6 +53,7 @@ cli =
 data CliParseErrors
   = InvalidUspsaMemberId Text
   | MatchNotFound Text
+  | MatchInfoNotFound
   deriving stock (Show)
 
 instance Exception CliParseErrors
@@ -63,12 +64,17 @@ parseCLI = do
 
   Conduit.runConduitRes $ do
     let stream = streamRawReport cli.reportPath
-    shooters <- lift $ Practiscore.Parser.Report.toShooters stream
-    scores <- lift $ Practiscore.Parser.Report.toScores stream
+    matchInfo <- Practiscore.Parser.Report.toMatchInfo stream
+    shooters <- Practiscore.Parser.Report.toShooters stream
+    scores <- Practiscore.Parser.Report.toScores stream
+    matchInfo <-
+      whenNothing matchInfo $
+        liftIO $
+          throwIO MatchInfoNotFound
     case toUspsaMemberId cli.uspsaMemberId of
       Nothing -> liftIO $ throwIO (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid")
       Just uspsaMemberId ->
-        Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId shooters scores)
+        Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId matchInfo shooters scores)
           .| Conduit.sinkFile cli.output
 
 showHelpOnErrorOnExecParser :: ParserInfo a -> IO a
