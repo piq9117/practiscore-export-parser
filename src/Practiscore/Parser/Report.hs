@@ -74,6 +74,7 @@ data MatchInfo = MatchInfo
   { name :: Text,
     date :: Text
   }
+  deriving (Show, Eq)
 
 toMatchInfo ::
   (MonadUnliftIO m) =>
@@ -89,33 +90,28 @@ toMatchInfo reportFieldsStream = do
                 || Data.Text.isInfixOf "match date" (Data.Text.toLower metadata)
             _ -> False
       )
-    .| accumMatchInfo
+    .| accumMatchNameAndDate
     .| decodeMatchInfo
     .| Conduit.headC
   where
-    accumMatchInfo :: (Monad m) => ConduitT ReportFields [Text] m ()
-    accumMatchInfo = Conduit.concatMapAccumC step Nothing
+    accumMatchNameAndDate :: (Monad m) => ConduitT ReportFields Text m ()
+    accumMatchNameAndDate = Conduit.concatMapAccumC stepNameAndDate []
 
-    step (InfoMetadata metadata) _ = (Just metadata, [])
-    step _ currentMetadata = (currentMetadata, [])
+    stepNameAndDate (InfoMetadata metadata) acc = (acc, [metadata])
+    stepNameAndDate _ acc = (acc, [])
 
-    decodeMatchInfo :: (Monad m) => ConduitT [Text] MatchInfo m ()
-    decodeMatchInfo =
-      evalStateC (MatchInfo {name = "", date = ""}) $
-        Conduit.awaitForever $ \metadata -> do
-          modify
-            ( \state ->
-                state
-                  { name =
-                      fromMaybe "" $
-                        find (\metadata -> Data.Text.isInfixOf "match name" $ Data.Text.toLower metadata) metadata,
-                    date =
-                      fromMaybe "" $
-                        find (\metadata -> Data.Text.isInfixOf "match date" $ Data.Text.toLower metadata) metadata
-                  }
-            )
-          metadata <- get
-          Conduit.yield metadata
+    decodeMatchInfo :: (Monad m) => ConduitT Text MatchInfo m ()
+    decodeMatchInfo = evalStateC Nothing $ Conduit.awaitForever $ \field -> do
+      when (Data.Text.isInfixOf "match name" (Data.Text.toLower field)) $
+        put (Just field)
+      when (Data.Text.isInfixOf "match date" (Data.Text.toLower field)) $ do
+        mn <- get
+        forM_ mn $ \name ->
+          Conduit.yield $
+            MatchInfo
+              { name = fromMaybe "" $ Data.Text.stripPrefix "Match name:" name,
+                date = fromMaybe "" $ Data.Text.stripPrefix "Match date:" field
+              }
 
 toShooters ::
   (Monad m) =>
