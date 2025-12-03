@@ -2,9 +2,13 @@
 
 module Spec.Parser.Report (testTree) where
 
+import Conduit qualified
+import Data.Either qualified
 import Practiscore.Parser.Report
-  ( ReportFields (..),
+  ( MatchInfo (..),
+    ReportFields (..),
     reportFields,
+    toMatchInfo,
   )
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
@@ -53,6 +57,15 @@ reportParserSpec = do
           Right (InfoMetadata "Classifiers:1"),
           Right (InfoMetadata "Match Level: Level I")
         ]
+
+    it "reportFields - matchInfo" $ do
+      let result = Data.Either.rights $ runParser reportFields mempty <$> infoLines
+      matchInfo <-
+        Conduit.runConduitRes $
+          toMatchInfo
+            ( Conduit.yieldMany result
+            )
+      shouldBe matchInfo (Just (MatchInfo {name = "LPRGC - Lower Providence USPSA Match November 2025  Match", date = "11/01/2025"}))
 
     it "reportFields - zMetadata" $
       shouldBe

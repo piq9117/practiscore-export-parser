@@ -72,6 +72,7 @@ library
     , bytestring
     , cassava
     , conduit
+    , exceptions
     , megaparsec
     , optparse-applicative
     , parser-combinators
@@ -97,6 +98,7 @@ test-suite practiscore-export-parser-test
   type:           exitcode-stdio-1.0
   build-depends:
     , base
+    , conduit
     , hspec
     , megaparsec
     , practiscore-export-parser

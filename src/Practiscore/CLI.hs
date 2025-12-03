@@ -4,7 +4,7 @@ module Practiscore.CLI (CLI (..), parseCLI) where
 
 import Conduit (MonadThrow, MonadUnliftIO, (.|))
 import Conduit qualified
-import Control.Exception (throwIO)
+import Control.Monad.Catch (throwM)
 import Options.Applicative
   ( Parser,
     ParserInfo,
@@ -70,9 +70,9 @@ parseCLI = do
     matchInfo <-
       whenNothing matchInfo $
         liftIO $
-          throwIO MatchInfoNotFound
+          throwM MatchInfoNotFound
     case toUspsaMemberId cli.uspsaMemberId of
-      Nothing -> liftIO $ throwIO (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid")
+      Nothing -> throwM (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid")
       Just uspsaMemberId ->
         Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId matchInfo shooters scores)
           .| Conduit.sinkFile cli.output
