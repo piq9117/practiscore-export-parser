@@ -17,6 +17,7 @@ module Practiscore.Parser.Report
     toShooters,
     toScores,
     toMatchInfo,
+    toStagesInfo,
   )
 where
 
@@ -41,7 +42,13 @@ import Practiscore.Parser.Shooter
     shooterLine,
     shooterWithFieldNames,
   )
-import Practiscore.Parser.Stage (stageHeaderLine, stageLine)
+import Practiscore.Parser.Stage
+  ( StageInfo,
+    decodeStageInfo,
+    stageHeaderLine,
+    stageLine,
+    stageWithFieldNames,
+  )
 import Text.Megaparsec (anySingle, eof, runParser)
 import Text.Megaparsec.Char (newline)
 
@@ -81,7 +88,7 @@ toMatchInfo ::
   (MonadUnliftIO m) =>
   ConduitT () ReportFields (ResourceT m) () ->
   ConduitT () Void (ResourceT m) (Maybe MatchInfo)
-toMatchInfo reportFieldsStream = do
+toMatchInfo reportFieldsStream =
   reportFieldsStream
     .| Conduit.filterC
       ( \reportFields ->
@@ -114,11 +121,34 @@ toMatchInfo reportFieldsStream = do
                 date = fromMaybe "" $ Data.Text.stripPrefix "Match date:" field
               }
 
+toStagesInfo ::
+  (Monad m) =>
+  ConduitT () ReportFields m () ->
+  ConduitT () Void m [StageInfo]
+toStagesInfo reportFieldStream =
+  reportFieldStream
+    .| stageParser
+    .| stageWithFieldNames
+    .| decodeStageInfo
+    .| Conduit.sinkList
+  where
+    stageParser :: (Monad m) => ConduitT ReportFields ([Text], [Text]) m ()
+    stageParser = Conduit.concatMapAccumC stageStepParser Nothing
+
+    stageStepParser :: ReportFields -> Maybe [Text] -> (Maybe [Text], [([Text], [Text])])
+    stageStepParser (StageHeaderLine header) _
+      | not (null header) = (Just header, [])
+    stageStepParser (StageLine line) currentHeader
+      | not (null line),
+        Just header <- currentHeader =
+          (currentHeader, [(header, line)])
+    stageStepParser _ currentHeader = (currentHeader, [])
+
 toShooters ::
   (Monad m) =>
   ConduitT () ReportFields m () ->
   ConduitT () Void m [Shooter]
-toShooters reportFieldsStream = do
+toShooters reportFieldsStream =
   reportFieldsStream
     .| shooterParser
     .| shooterWithFieldNames

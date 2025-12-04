@@ -18,6 +18,10 @@ matchToCsvSpec =
             [ Stage
                 { matchName = "test-match",
                   matchDate = "11/01/2025",
+                  stageNumber = 1,
+                  stageName = "stage-name-1",
+                  classifier = False,
+                  classifierNumber = Nothing,
                   shooter =
                     Shooter
                       { comp = Just CompId {unCompId = 1},
@@ -97,6 +101,10 @@ matchToCsvSpec =
               Stage
                 { matchName = "test-match",
                   matchDate = "11/01/2025",
+                  stageNumber = 2,
+                  stageName = "stage-name-2",
+                  classifier = False,
+                  classifierNumber = Nothing,
                   shooter =
                     Shooter
                       { comp = Just CompId {unCompId = 1},
@@ -177,7 +185,7 @@ matchToCsvSpec =
 
       shouldBe
         (encodeMatch match)
-        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hit_factor,stage_place,match_name,match_date\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,2,0,0,0,0,20.54,136,136,6.6212,1,test-match,11/01/2025\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2,test-match,11/01/2025\r\n"
+        "uspsa_id,firstname,lastname,class,division,match_points,place_overall,gun,stage,A,B,C,D,miss,no_shoot,procedural,time,raw_points,total_points,hit_factor,stage_place,match_name,match_date,stage_number,stage_name\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,2,0,0,0,0,20.54,136,136,6.6212,1,test-match,11/01/2025,1,stage-name-1\r\nuspsa-member-number,first-name,last-name,B,Carry Optics,568.8844,1,Pistol,1,26,0,1,0,1,0,0,24.34,133,123,5.0534,2,test-match,11/01/2025,2,stage-name-2\r\n"
 
 testTree :: IO TestTree
 testTree = testSpec "USPSA.Match" $ do
