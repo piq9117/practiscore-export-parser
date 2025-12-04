@@ -42,6 +42,8 @@ decodeStageInfo = evalStateC emptyStageInfo $ Conduit.awaitForever $ \keyValPair
     case header of
       "Number" ->
         modify (\stageInfo -> stageInfo {number = fromMaybe 0 $ readMaybe $ toString val})
+      "Stage_name" ->
+        modify (\stageInfo -> stageInfo {name = val})
       "Classifier" ->
         modify (\stageInfo -> stageInfo {classifier = val == "Yes"})
       "Classifier_No" ->
