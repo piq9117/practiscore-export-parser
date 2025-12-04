@@ -64,6 +64,7 @@ parseCLI = do
 
   Conduit.runConduitRes $ do
     let stream = streamRawReport cli.reportPath
+    stageInfo <- Practiscore.Parser.Report.toStagesInfo stream
     matchInfo <- Practiscore.Parser.Report.toMatchInfo stream
     shooters <- Practiscore.Parser.Report.toShooters stream
     scores <- Practiscore.Parser.Report.toScores stream
@@ -74,7 +75,7 @@ parseCLI = do
     case toUspsaMemberId cli.uspsaMemberId of
       Nothing -> throwM (InvalidUspsaMemberId $ cli.uspsaMemberId <> " is not valid")
       Just uspsaMemberId ->
-        Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId matchInfo shooters scores)
+        Conduit.yield (toStrict $ encodeMatch $ getShooterMatch uspsaMemberId matchInfo stageInfo shooters scores)
           .| Conduit.sinkFile cli.output
 
 showHelpOnErrorOnExecParser :: ParserInfo a -> IO a
