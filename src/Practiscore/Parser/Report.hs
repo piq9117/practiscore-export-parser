@@ -23,6 +23,7 @@ where
 import Conduit (ConduitT, MonadUnliftIO, ResourceT, (.|))
 import Conduit qualified
 import Control.Applicative.Combinators (manyTill)
+import Control.Monad.Catch (MonadThrow)
 import Data.Conduit.Lift (evalStateC)
 import Data.Text qualified
 import Practiscore.Parser (ParseError, Parser, lineStartingWith, prettifyParseError)
@@ -137,7 +138,7 @@ toShooters reportFieldsStream = do
     shooterStepParser _ currentHeader = (currentHeader, [])
 
 toScores ::
-  (Monad m) =>
+  (Monad m, MonadThrow m) =>
   ConduitT () ReportFields m () ->
   ConduitT () Void m [Score]
 toScores reportFieldsStream =

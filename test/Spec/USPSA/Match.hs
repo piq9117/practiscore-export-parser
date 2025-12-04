@@ -61,7 +61,7 @@ matchToCsvSpec =
                   score =
                     Score
                       { gun = "Pistol",
-                        stage = Just 1,
+                        stage = 1,
                         comp = Just CompId {unCompId = 1},
                         dQ = "No",
                         dNF = "No",
@@ -140,7 +140,7 @@ matchToCsvSpec =
                   score =
                     Score
                       { gun = "Pistol",
-                        stage = Just 1,
+                        stage = 1,
                         comp = Just CompId {unCompId = 2},
                         dQ = "No",
                         dNF = "No",
