@@ -15,6 +15,7 @@ where
 
 import Conduit (ConduitT)
 import Conduit qualified
+import Control.Monad.Catch (MonadThrow, throwM)
 import Data.Conduit.Lift (evalStateC)
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Practiscore.USPSA (CompId (..))
@@ -22,7 +23,7 @@ import Text.Megaparsec (eof)
 
 data Score = Score
   { gun :: Text,
-    stage :: Maybe Word8,
+    stage :: Word8,
     comp :: Maybe CompId,
     dQ :: Text,
     dNF :: Text,
@@ -60,7 +61,7 @@ emptyScore :: Score
 emptyScore =
   Score
     { gun = "",
-      stage = Nothing,
+      stage = 0,
       comp = Nothing,
       dQ = "",
       dNF = "",
@@ -126,12 +127,22 @@ scoreWithFieldNames = Conduit.concatMapAccumC scoreStepWithFieldNames [[]]
           (accum, [zipWith (\h l -> (h, l)) header line])
     scoreStepWithFieldNames _ accum = (accum, [])
 
-decodeScore :: (Monad m) => ConduitT [(String, String)] Score m ()
+data ScoreDecodeError
+  = UnableToParseStageNumber
+  deriving stock (Show)
+
+instance Exception ScoreDecodeError
+
+decodeScore :: (Monad m, MonadThrow m) => ConduitT [(String, String)] Score m ()
 decodeScore = evalStateC emptyScore $ Conduit.awaitForever $ \keyValPair -> do
   for_ keyValPair $ \(header, val) ->
     case header of
       "Gun" -> modify (\score -> score {gun = toText val})
-      "Stage" -> modify (\score -> score {stage = readMaybe val})
+      "Stage" -> do
+        stage <-
+          whenNothing (readMaybe val) $
+            throwM UnableToParseStageNumber
+        modify (\score -> score {stage})
       "Comp" ->
         modify
           ( \score ->
