@@ -1,7 +1,9 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Spec.Parser.Report (testTree) where
 
+import Conduit ((.|))
 import Conduit qualified
 import Data.Either qualified
 import Practiscore.Parser.Report
@@ -10,6 +12,7 @@ import Practiscore.Parser.Report
     reportFields,
     toMatchInfo,
   )
+import Practiscore.Parser.Stage (StageInfo (..), decodeStageInfo)
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
@@ -160,6 +163,28 @@ reportParserSpec = do
                 ]
             )
         )
+
+    it "reportFields - decodeStageInfo" $ do
+      let stages =
+            [ ("Number", "1"),
+              ("Guntype", "Pistol"),
+              ("Minimum Rounds", "28"),
+              ("Maximum Points", "140"),
+              ("Classifier", "No"),
+              ("Classifier_No", ""),
+              ("Stage_name", "I Am A Meat Popsicle"),
+              ("ScoringType", "Comstock"),
+              ("TimesRun", "1")
+            ]
+      res <-
+        Conduit.runConduit $
+          Conduit.yield stages
+            .| decodeStageInfo
+            .| Conduit.headC
+
+      shouldBe
+        res
+        (Just (StageInfo {number = 1, name = "I Am A Meat Popsicle", classifier = False, classifierNumber = Nothing}))
 
     it "reportFields - stages" $ do
       let stages =

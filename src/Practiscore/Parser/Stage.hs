@@ -26,6 +26,7 @@ data StageInfo = StageInfo
     classifier :: Bool,
     classifierNumber :: Maybe Text
   }
+  deriving (Show, Eq)
 
 emptyStageInfo :: StageInfo
 emptyStageInfo =
