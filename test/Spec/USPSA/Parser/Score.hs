@@ -1,6 +1,6 @@
-module Spec.Parser.Score (testTree) where
+module Spec.USPSA.Parser.Score (testTree) where
 
-import Practiscore.Parser.Score
+import Practiscore.USPSA.Parser.Score
   ( scoreHeader,
     scoreLine,
   )

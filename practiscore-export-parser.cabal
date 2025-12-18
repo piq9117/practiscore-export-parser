@@ -82,13 +82,13 @@ library
   exposed-modules:
     Practiscore.CLI
     Practiscore.Parser
-    Practiscore.Parser.Report
-    Practiscore.Parser.Score
-    Practiscore.Parser.Shooter
-    Practiscore.Parser.Stage
     Practiscore.USPSA
     Practiscore.USPSA.CLI
     Practiscore.USPSA.Match
+    Practiscore.USPSA.Parser.Report
+    Practiscore.USPSA.Parser.Score
+    Practiscore.USPSA.Parser.Shooter
+    Practiscore.USPSA.Parser.Stage
 
 test-suite practiscore-export-parser-test
   import:         common-option
@@ -107,11 +107,11 @@ test-suite practiscore-export-parser-test
     , tasty-hspec
 
   other-modules:
-    Spec.Parser.Report
-    Spec.Parser.Score
-    Spec.Parser.Shooter
-    Spec.Parser.Stage
     Spec.USPSA.Match
+    Spec.USPSA.Parser.Report
+    Spec.USPSA.Parser.Score
+    Spec.USPSA.Parser.Shooter
+    Spec.USPSA.Parser.Stage
 
 executable ps-tap
   import:           common-option

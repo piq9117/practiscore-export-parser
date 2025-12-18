@@ -1,18 +1,18 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Spec.Parser.Report (testTree) where
+module Spec.USPSA.Parser.Report (testTree) where
 
 import Conduit ((.|))
 import Conduit qualified
 import Data.Either qualified
-import Practiscore.Parser.Report
+import Practiscore.USPSA.Parser.Report
   ( MatchInfo (..),
     ReportFields (..),
     reportFields,
     toMatchInfo,
   )
-import Practiscore.Parser.Stage (StageInfo (..), decodeStageInfo)
+import Practiscore.USPSA.Parser.Stage (StageInfo (..), decodeStageInfo)
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)

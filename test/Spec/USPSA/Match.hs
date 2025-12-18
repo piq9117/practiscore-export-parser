@@ -2,10 +2,10 @@
 
 module Spec.USPSA.Match (testTree) where
 
-import Practiscore.Parser.Score (Score (..))
-import Practiscore.Parser.Shooter (Shooter (..))
 import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Practiscore.USPSA.Match (Stage (..), encodeMatch)
+import Practiscore.USPSA.Parser.Score (Score (..))
+import Practiscore.USPSA.Parser.Shooter (Shooter (..))
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)

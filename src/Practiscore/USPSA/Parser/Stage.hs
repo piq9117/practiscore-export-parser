@@ -1,4 +1,4 @@
-module Practiscore.Parser.Stage
+module Practiscore.USPSA.Parser.Stage
   ( StageInfo (..),
     stageHeaderIdentifier,
     stageHeader,

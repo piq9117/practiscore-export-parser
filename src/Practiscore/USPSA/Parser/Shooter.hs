@@ -1,6 +1,6 @@
 {-# LANGUAGE DerivingStrategies #-}
 
-module Practiscore.Parser.Shooter
+module Practiscore.USPSA.Parser.Shooter
   ( Shooter (..),
     cell,
     cells,

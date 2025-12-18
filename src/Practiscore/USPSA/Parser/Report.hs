@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Practiscore.Parser.Report
+module Practiscore.USPSA.Parser.Report
   ( Report (..),
     ReportFields (..),
     MatchInfo (..),
@@ -28,21 +28,21 @@ import Control.Monad.Catch (MonadThrow)
 import Data.Conduit.Lift (evalStateC)
 import Data.Text qualified
 import Practiscore.Parser (ParseError, Parser, lineStartingWith, prettifyParseError)
-import Practiscore.Parser.Score
+import Practiscore.USPSA.Parser.Score
   ( Score (..),
     decodeScore,
     scoreHeader,
     scoreLine,
     scoreWithFieldNames,
   )
-import Practiscore.Parser.Shooter
+import Practiscore.USPSA.Parser.Shooter
   ( Shooter (..),
     decodeShooter,
     shooterHeaderLine,
     shooterLine,
     shooterWithFieldNames,
   )
-import Practiscore.Parser.Stage
+import Practiscore.USPSA.Parser.Stage
   ( StageInfo,
     decodeStageInfo,
     stageHeaderLine,

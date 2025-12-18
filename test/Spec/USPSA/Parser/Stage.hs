@@ -1,8 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Spec.Parser.Stage where
+module Spec.USPSA.Parser.Stage where
 
-import Practiscore.Parser.Stage (stageHeaderLine, stageLine)
+import Practiscore.USPSA.Parser.Stage (stageHeaderLine, stageLine)
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Test.Tasty (TestTree)
 import Test.Tasty.Hspec (testSpec)
