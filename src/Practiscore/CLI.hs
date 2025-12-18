@@ -19,10 +19,10 @@ import Options.Applicative
     showHelpOnError,
     strOption,
   )
-import Practiscore.Parser.Report qualified
-import Practiscore.Parser.Shooter (toUspsaMemberId)
 import Practiscore.USPSA.CLI (streamRawReport)
 import Practiscore.USPSA.Match (encodeMatch, getShooterMatch)
+import Practiscore.USPSA.Parser.Report qualified
+import Practiscore.USPSA.Parser.Shooter (toUspsaMemberId)
 
 data CLI = CLI
   { uspsaMemberId :: Text,
@@ -64,10 +64,10 @@ parseCLI = do
 
   Conduit.runConduitRes $ do
     let stream = streamRawReport cli.reportPath
-    stageInfo <- Practiscore.Parser.Report.toStagesInfo stream
-    matchInfo <- Practiscore.Parser.Report.toMatchInfo stream
-    shooters <- Practiscore.Parser.Report.toShooters stream
-    scores <- Practiscore.Parser.Report.toScores stream
+    stageInfo <- Practiscore.USPSA.Parser.Report.toStagesInfo stream
+    matchInfo <- Practiscore.USPSA.Parser.Report.toMatchInfo stream
+    shooters <- Practiscore.USPSA.Parser.Report.toShooters stream
+    scores <- Practiscore.USPSA.Parser.Report.toScores stream
     matchInfo <-
       whenNothing matchInfo $
         liftIO $

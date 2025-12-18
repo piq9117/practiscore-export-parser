@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Practiscore.Parser.Score
+module Practiscore.USPSA.Parser.Score
   ( Score (..),
     scoreHeader,
     scoreHeaderIdentifier,

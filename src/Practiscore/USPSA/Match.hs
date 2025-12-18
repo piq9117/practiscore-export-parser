@@ -16,19 +16,19 @@ import Data.Csv
     namedRecord,
     (.=),
   )
-import Practiscore.Parser.Report qualified
-import Practiscore.Parser.Score qualified
-import Practiscore.Parser.Shooter qualified
-import Practiscore.Parser.Stage qualified
 import Practiscore.USPSA (UspsaMemberId (..))
+import Practiscore.USPSA.Parser.Report qualified
+import Practiscore.USPSA.Parser.Score qualified
+import Practiscore.USPSA.Parser.Shooter qualified
+import Practiscore.USPSA.Parser.Stage qualified
 
 type Match = [Stage]
 
 data Stage = Stage
-  { shooter :: Practiscore.Parser.Shooter.Shooter,
+  { shooter :: Practiscore.USPSA.Parser.Shooter.Shooter,
     matchName :: Text,
     matchDate :: Text,
-    score :: Practiscore.Parser.Score.Score,
+    score :: Practiscore.USPSA.Parser.Score.Score,
     stageNumber :: Word8,
     stageName :: Text,
     classifier :: Bool,
@@ -98,10 +98,10 @@ instance ToNamedRecord Stage where
 
 getShooterMatch ::
   UspsaMemberId ->
-  Practiscore.Parser.Report.MatchInfo ->
-  [Practiscore.Parser.Stage.StageInfo] ->
-  [Practiscore.Parser.Shooter.Shooter] ->
-  [Practiscore.Parser.Score.Score] ->
+  Practiscore.USPSA.Parser.Report.MatchInfo ->
+  [Practiscore.USPSA.Parser.Stage.StageInfo] ->
+  [Practiscore.USPSA.Parser.Shooter.Shooter] ->
+  [Practiscore.USPSA.Parser.Score.Score] ->
   Match
 getShooterMatch memberId matchInfo stageInfo shooters scores =
   case find (\shooter -> shooter.uspsa == Just memberId) shooters of

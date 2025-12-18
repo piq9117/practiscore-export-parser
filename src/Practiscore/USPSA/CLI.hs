@@ -4,7 +4,7 @@ module Practiscore.USPSA.CLI (streamRawReport) where
 
 import Conduit (ConduitT, MonadResource, MonadThrow, (.|))
 import Conduit qualified
-import Practiscore.Parser.Report (ReportFields, parseReportFields)
+import Practiscore.USPSA.Parser.Report (ReportFields, parseReportFields)
 
 data ParseError = ParseError Text
   deriving stock (Show)

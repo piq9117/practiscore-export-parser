@@ -1,8 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Spec.Parser.Shooter (testTree) where
+module Spec.USPSA.Parser.Shooter (testTree) where
 
-import Practiscore.Parser.Shooter
+import Practiscore.USPSA.Parser.Shooter
   ( cell,
     cells,
     shooterHeaderLine,
