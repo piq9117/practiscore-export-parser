@@ -82,6 +82,7 @@ library
   exposed-modules:
     Practiscore.CLI
     Practiscore.Parser
+    Practiscore.SCSA.Parser.Report
     Practiscore.USPSA
     Practiscore.USPSA.CLI
     Practiscore.USPSA.Match
@@ -107,6 +108,7 @@ test-suite practiscore-export-parser-test
     , tasty-hspec
 
   other-modules:
+    Spec.SCSA.Parser.Report
     Spec.USPSA.Match
     Spec.USPSA.Parser.Report
     Spec.USPSA.Parser.Score
