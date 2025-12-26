@@ -27,7 +27,12 @@ import Control.Applicative.Combinators (manyTill)
 import Control.Monad.Catch (MonadThrow)
 import Data.Conduit.Lift (evalStateC)
 import Data.Text qualified
-import Practiscore.Parser (ParseError, Parser, lineStartingWith, prettifyParseError)
+import Practiscore.Parser
+  ( ParseError,
+    Parser,
+    lineStartingWith,
+    prettifyParseError,
+  )
 import Practiscore.USPSA.Parser.Score
   ( Score (..),
     decodeScore,
@@ -76,7 +81,7 @@ data ReportFields
 
 parseReportFields :: String -> Either ParseError ReportFields
 parseReportFields fileContent =
-  bimap prettifyParseError identity $ runParser (reportFields) mempty fileContent
+  bimap prettifyParseError identity $ runParser reportFields mempty fileContent
 
 data MatchInfo = MatchInfo
   { name :: Text,

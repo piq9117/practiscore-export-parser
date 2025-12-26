@@ -20,7 +20,7 @@ import Text.Megaparsec (runParser)
 
 reportParserSpec :: Spec
 reportParserSpec = do
-  describe "ReportParser" $ do
+  describe "Spec.USPSA.Parser.Report" $ do
     let titleLine = "$PRACTISCORE 1.682 RESULTS"
     let infoLines :: [String] =
           [ "$INFO Region:USPSA",
