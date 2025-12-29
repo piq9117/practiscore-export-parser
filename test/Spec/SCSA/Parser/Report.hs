@@ -28,7 +28,8 @@ reportFieldsSpec =
       let infoLine = "ER,pricetown,1,\"Pricetown Steel Challenge - December 2025 Sunday Match\",20251221,20251226,,,,,,,,,,,,,,,,,,,,"
       shouldBe
         (runParser reportFields mempty infoLine)
-        (Right (InfoMetadata "pricetown,1,\"Pricetown Steel Challenge - December 2025 Sunday Match\",20251221,20251226,,,,,,,,,,,,,,,,,,,,"))
+        (Right (InfoMetadata ["pricetown", "1", "\"Pricetown Steel Challenge - December 2025 Sunday Match\"", "20251221", "20251226", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]))
+
     it "reportFields - shooterLine" $ do
       let shooterLine = "EC,1,member-id-1,firstname-1,lastname-1,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,,,,,,,,,,,,,"
       shouldBe
