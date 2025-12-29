@@ -6,11 +6,6 @@ import Conduit (ConduitT, MonadResource, MonadThrow, (.|))
 import Conduit qualified
 import Practiscore.USPSA.Parser.Report (ReportFields, parseReportFields)
 
-data ParseError = ParseError Text
-  deriving stock (Show)
-
-instance Exception ParseError
-
 streamRawReport ::
   (MonadThrow m, MonadResource m) =>
   FilePath ->

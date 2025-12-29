@@ -82,6 +82,8 @@ library
   exposed-modules:
     Practiscore.CLI
     Practiscore.Parser
+    Practiscore.SCSA.CLI
+    Practiscore.SCSA.Match
     Practiscore.SCSA.Parser.Report
     Practiscore.SCSA.Parser.Score
     Practiscore.SCSA.Parser.Shooter
