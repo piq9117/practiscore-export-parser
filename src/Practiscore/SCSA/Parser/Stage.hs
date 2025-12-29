@@ -18,7 +18,7 @@ import Prelude hiding (id)
 data Stage = Stage
   { id :: Word8,
     name :: Text,
-    classifierCode :: Text
+    classifierCode :: Maybe Text
   }
   deriving stock (Show, Eq)
 
@@ -48,7 +48,16 @@ decodeStage =
                    "name" ->
                      modify (\stage -> stage {name = Data.Text.filter (/= '"') val})
                    "classifier code" ->
-                     modify (\stage -> stage {classifierCode = val})
+                     modify
+                       ( \stage ->
+                           stage
+                             { classifierCode =
+                                 if Data.Text.strip val == mempty
+                                   then
+                                     Nothing
+                                   else Just val
+                             }
+                       )
                    _ -> pure ()
                stage <- get
                Conduit.yield stage
