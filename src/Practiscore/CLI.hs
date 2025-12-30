@@ -134,8 +134,9 @@ parseCLI = do
             .| Conduit.sinkList
 
         Conduit.yield
-          ( toStrict $ Practiscore.SCSA.Match.encodeMatch $
-              Practiscore.SCSA.Match.getMatch cli.memberId matchInfo stages scores shooters divisions
+          ( toStrict $
+              Practiscore.SCSA.Match.encodeMatch $
+                Practiscore.SCSA.Match.getMatch cli.memberId matchInfo stages scores shooters divisions
           )
           .| Conduit.sinkFile cli.output
 
