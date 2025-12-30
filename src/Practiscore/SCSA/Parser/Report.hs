@@ -15,6 +15,7 @@ where
 import Conduit (ConduitT, MonadThrow, (.|))
 import Conduit qualified
 import Data.Conduit.Lift (evalStateC)
+import Data.Text qualified
 import Practiscore.Parser
   ( ParseError,
     Parser,
@@ -86,7 +87,7 @@ decodeMatchInfo =
                      "match level" ->
                        modify (\info -> info {matchLevel = fromMaybe 0 $ readMaybe $ toString val})
                      "match name" ->
-                       modify (\info -> info {matchName = val})
+                       modify (\info -> info {matchName = Data.Text.filter (/= '"') val})
                      "match date" ->
                        modify (\info -> info {matchDate = val})
                      _ -> pure ()
