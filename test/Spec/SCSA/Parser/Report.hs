@@ -4,10 +4,12 @@ module Spec.SCSA.Parser.Report (testTree) where
 
 import Conduit ((.|))
 import Conduit qualified
+import Practiscore.SCSA.Parser.Division (Division (..))
 import Practiscore.SCSA.Parser.Report
   ( ReportFields (..),
     reportFieldStream,
     reportFields,
+    toDivisionStream,
     toScoreStream,
     toShooterStream,
     toStageStream,
@@ -224,6 +226,28 @@ reportFieldsSpec =
           Score {matchTypeId = 1, stageNumber = 4, shooterId = 1, stageTotalTime = 13.29, string1Time = 3.84, string1Penalty = 0.0, string1DNF = False, string2Time = 4.13, string2Penalty = 0.0, string2DNF = False, string3Time = 3.44, string3Penalty = 0.0, string3DNF = False, string4Time = 3.15, string4Penalty = 0.0, string4DNF = False, string5Time = 2.86, string5Penalty = 0.0, string5DNF = False},
           Score {matchTypeId = 1, stageNumber = 5, shooterId = 1, stageTotalTime = 14.73, string1Time = 3.68, string1Penalty = 0.0, string1DNF = False, string2Time = 4.82, string2Penalty = 0.0, string2DNF = False, string3Time = 4.22, string3Penalty = 0.0, string3DNF = False, string4Time = 3.68, string4Penalty = 0.0, string4DNF = False, string5Time = 3.15, string5Penalty = 0.0, string5DNF = False},
           Score {matchTypeId = 1, stageNumber = 6, shooterId = 1, stageTotalTime = 9.57, string1Time = 2.79, string1Penalty = 0.0, string1DNF = False, string2Time = 2.92, string2Penalty = 0.0, string2DNF = False, string3Time = 2.19, string3Penalty = 0.0, string3DNF = False, string4Time = 2.02, string4Penalty = 0.0, string4DNF = False, string5Time = 2.57, string5Penalty = 0.0, string5DNF = False}
+        ]
+    it "reportFields - division" $ do
+      let fileContent =
+            [ "CO,1,1,1,1,OPN,,,,,,,,,,,,,,,,,,,,",
+              "CO,2,2,2,1,OSR,,,,,,,,,,,,,,,,,,,,",
+              "CO,3,3,3,1,OPN,,,,,,,,,,,,,,,,,,,,",
+              "CO,4,4,4,1,OSR,,,,,,,,,,,,,,,,,,,,",
+              "CO,5,5,5,2,RFPO,,,,,,,,,,,,,,,,,,,,"
+            ]
+      result <-
+        Conduit.runConduit $
+          Conduit.yieldMany fileContent
+            .| reportFieldStream
+            .| toDivisionStream
+            .| Conduit.sinkList
+      shouldBe
+        result
+        [ Division {recordType = "1", order = "1", shooterId = "1", matchTypeId = "1", divisionCode = "OPN"},
+          Division {recordType = "2", order = "2", shooterId = "2", matchTypeId = "1", divisionCode = "OSR"},
+          Division {recordType = "3", order = "3", shooterId = "3", matchTypeId = "1", divisionCode = "OPN"},
+          Division {recordType = "4", order = "4", shooterId = "4", matchTypeId = "1", divisionCode = "OSR"},
+          Division {recordType = "5", order = "5", shooterId = "5", matchTypeId = "2", divisionCode = "RFPO"}
         ]
 
 testTree :: IO TestTree
