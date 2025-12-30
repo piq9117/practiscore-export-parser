@@ -4,6 +4,7 @@ module Practiscore.SCSA.Parser.Stage
   ( Stage (..),
     stageLine,
     decodeStage,
+    emptyStage,
   )
 where
 
@@ -25,6 +26,14 @@ data Stage = Stage
 stageLine :: Parser [String]
 stageLine = lineStartingWith "ST," *> cells <* eof
 
+emptyStage :: Stage
+emptyStage =
+  Stage
+    { id = 0,
+      name = mempty,
+      classifierCode = mempty
+    }
+
 -- | stage headers are not part of the file export from practiscore.
 -- So this is an assumption based on what is in the file output.
 --
@@ -38,7 +47,7 @@ stageHeaders = ["id", "name", "classifier code"]
 decodeStage :: (Monad m) => ConduitT [Text] Stage m ()
 decodeStage =
   zipStageWithHeaders
-    .| ( evalStateC (Stage {id = 0, name = mempty, classifierCode = mempty}) $
+    .| ( evalStateC emptyStage $
            Conduit.awaitForever $
              \keyValPairs -> do
                for_ keyValPairs $ \(header, val) ->

@@ -128,10 +128,14 @@ parseCLI = do
             .| Practiscore.SCSA.Parser.Report.toScoreStream
             .| Conduit.sinkList
 
+        divisions <-
+          reportFieldStream
+            .| Practiscore.SCSA.Parser.Report.toDivisionStream
+            .| Conduit.sinkList
+
         Conduit.yield
-          ( toStrict $
-              Practiscore.SCSA.Match.encodeMatch $
-                Practiscore.SCSA.Match.getMatch cli.memberId matchInfo stages scores shooters
+          ( toStrict $ Practiscore.SCSA.Match.encodeMatch $
+              Practiscore.SCSA.Match.getMatch cli.memberId matchInfo stages scores shooters divisions
           )
           .| Conduit.sinkFile cli.output
 

@@ -4,6 +4,7 @@ module Practiscore.SCSA.Parser.Shooter
   ( Shooter (..),
     shooterLine,
     decodeShooter,
+    emptyShooter,
   )
 where
 
@@ -30,10 +31,14 @@ shooterHeaders =
     "lastname"
   ]
 
+emptyShooter :: Shooter
+emptyShooter =
+  Shooter {id = 0, memberId = mempty, firstname = Nothing, lastname = Nothing}
+
 decodeShooter :: (Monad m) => ConduitT [Text] Shooter m ()
 decodeShooter =
   zipShooterWithHeaders
-    .| ( evalStateC (Shooter {id = 0, memberId = mempty, firstname = Nothing, lastname = Nothing}) $
+    .| ( evalStateC emptyShooter $
            Conduit.awaitForever
              ( \keyValPairs -> do
                  for_ keyValPairs $ \(header, val) ->
