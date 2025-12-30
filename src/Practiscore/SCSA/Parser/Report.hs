@@ -23,6 +23,7 @@ import Practiscore.Parser
     lineStartingWith,
     prettifyParseError,
   )
+import Practiscore.SCSA.Parser.Division (divisionLine)
 import Practiscore.SCSA.Parser.Score (Score (..), decodeScore, scoreLine)
 import Practiscore.SCSA.Parser.Shooter (Shooter (..), decodeShooter, shooterLine)
 import Practiscore.SCSA.Parser.Stage (Stage (..), decodeStage, stageLine)
@@ -33,6 +34,7 @@ data ReportFields
   | ShooterLine ![Text]
   | StageLine ![Text]
   | ScoreLine ![Text]
+  | DivisionLine ![Text]
   | Empty
   deriving stock (Show, Eq)
 
@@ -46,6 +48,7 @@ reportFields =
     <|> ((ShooterLine <<< (fmap toText)) <$> shooterLine)
     <|> ((StageLine <<< (fmap toText)) <$> stageLine)
     <|> ((ScoreLine <<< (fmap toText)) <$> scoreLine)
+    <|> ((DivisionLine <<< (fmap toText)) <$> divisionLine)
     <|> pure Empty
 
 reportFieldStream :: (MonadThrow m, Monad m) => ConduitT String ReportFields m ()

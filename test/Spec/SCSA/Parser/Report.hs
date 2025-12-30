@@ -174,6 +174,11 @@ reportFieldsSpec =
       shouldBe
         (runParser reportFields mempty scoreLine)
         (Right (ScoreLine ["1", "1", "2", "14.24", "4.28", "0", "FALSE", "4.28", "0", "FALSE", "3.22", "0", "FALSE", "3.2", "0", "FALSE", "3.54", "0", "FALSE", "", "", "", "", "", ""]))
+    it "reportFields - divisionLine" $ do
+      let divisionLine = "CO,1,1,1,1,OPN,,,,,,,,,,,,,,,,,,,,"
+      shouldBe
+        (runParser reportFields mempty divisionLine)
+        (Right (DivisionLine ["1", "1", "1", "1", "OPN", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]))
 
     it "reportFieldStream - stage" $ do
       let fileContent = "ST,1,\"5 To Go\",SC-101,1,1,5,TRUE,FALSE,0.00,3.00,,,,,,,,,,,,,,,"
@@ -183,7 +188,7 @@ reportFieldsSpec =
             .| reportFieldStream
             .| toStageStream
             .| Conduit.sinkList
-      shouldBe result [Stage {id = 1, name = "5 To Go", classifierCode = "SC-101"}]
+      shouldBe result [Stage {id = 1, name = "5 To Go", classifierCode = Just "SC-101"}]
 
     it "reportFieldStream - shooter" $ do
       let fileContent = "EC,1,member-id-1,firstname-1,lastname-1,TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,,,,,,,,,,,,,"
