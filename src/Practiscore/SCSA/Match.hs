@@ -1,1 +1,126 @@
-module Practiscore.SCSA.Match where
+{-# LANGUAGE DerivingStrategies #-}
+
+module Practiscore.SCSA.Match
+  ( Match,
+    MatchRow (..),
+    getMatch,
+    encodeMatch,
+  )
+where
+
+import Data.Csv
+  ( DefaultOrdered (..),
+    ToNamedRecord (..),
+    encodeDefaultOrderedByName,
+    header,
+    namedRecord,
+    (.=),
+  )
+import Practiscore.SCSA.Parser.Report qualified
+import Practiscore.SCSA.Parser.Score qualified
+import Practiscore.SCSA.Parser.Shooter qualified
+import Practiscore.SCSA.Parser.Stage qualified
+
+type Match = [MatchRow]
+
+data MatchRow = MatchRow
+  { shooter :: Practiscore.SCSA.Parser.Shooter.Shooter,
+    matchName :: Text,
+    matchDate :: Text,
+    score :: Practiscore.SCSA.Parser.Score.Score,
+    stageNumber :: Word16,
+    stageName :: Text,
+    classifierCode :: Maybe Text
+  }
+  deriving stock (Show)
+
+instance DefaultOrdered MatchRow where
+  headerOrder _ =
+    header
+      [ "scsa_id",
+        "firstname",
+        "lastname",
+        "match_name",
+        "match_date",
+        "stage_number",
+        "stage_total_time",
+        -- string 1
+        "string_1_time",
+        "string_1_penalty",
+        "string_1_dnf",
+        -- string 2
+        "string_2_time",
+        "string_2_penalty",
+        "string_2_dnf",
+        -- string 3
+        "string_3_time",
+        "string_3_penalty",
+        "string_3_dnf",
+        -- string 4
+        "string_4_time",
+        "string_4_penalty",
+        "string_4_dnf",
+        -- string 5
+        "string_5_time",
+        "string_5_penalty",
+        "string_5_dnf"
+      ]
+
+instance ToNamedRecord MatchRow where
+  toNamedRecord row =
+    namedRecord
+      [ "scsa_id" .= row.shooter.memberId,
+        "firstname" .= row.shooter.firstname,
+        "lastname" .= row.shooter.lastname,
+        "match_name" .= row.matchName,
+        "match_date" .= row.matchDate,
+        "stage_number" .= row.stageNumber,
+        "stage_total_time" .= row.score.stageTotalTime,
+        -- string 1
+        "string_1_time" .= row.score.string1Time,
+        "string_1_penalty" .= row.score.string1Penalty,
+        "string_1_dnf" .= (show @Text row.score.string1DNF),
+        -- string 2
+        "string_2_time" .= row.score.string2Time,
+        "string_2_penalty" .= row.score.string2Penalty,
+        "string_2_dnf" .= (show @Text row.score.string2DNF),
+        -- string 3
+        "string_3_time" .= row.score.string3Time,
+        "string_3_penalty" .= row.score.string3Penalty,
+        "string_3_dnf" .= (show @Text row.score.string3DNF),
+        -- string 4
+        "string_4_time" .= row.score.string4Time,
+        "string_4_penalty" .= row.score.string4Penalty,
+        "string_4_dnf" .= (show @Text row.score.string4DNF),
+        -- string 5
+        "string_5_time" .= row.score.string5Time,
+        "string_5_penalty" .= row.score.string5Penalty,
+        "string_5_dnf" .= (show @Text row.score.string5DNF)
+      ]
+
+encodeMatch :: Match -> LByteString
+encodeMatch match = encodeDefaultOrderedByName match
+
+getMatch ::
+  -- member id
+  Text ->
+  Practiscore.SCSA.Parser.Report.MatchInfo ->
+  [Practiscore.SCSA.Parser.Stage.Stage] ->
+  [Practiscore.SCSA.Parser.Score.Score] ->
+  [Practiscore.SCSA.Parser.Shooter.Shooter] ->
+  Match
+getMatch memberId matchInfo stages scores shooters =
+  case find (\shooter -> shooter.memberId == memberId) shooters of
+    Nothing -> []
+    Just shooter ->
+      [ MatchRow
+          { shooter,
+            matchName = matchInfo.matchName,
+            matchDate = matchInfo.matchDate,
+            score,
+            stageNumber = score.stageNumber,
+            stageName = maybe mempty (\stage -> stage.name) $ find (\stage -> stage.id == shooter.id) stages,
+            classifierCode = maybe mempty (\stage -> stage.classifierCode) $ find (\stage -> stage.id == shooter.id) stages
+          }
+        | score <- filter (\score -> score.shooterId == shooter.id) scores
+      ]
