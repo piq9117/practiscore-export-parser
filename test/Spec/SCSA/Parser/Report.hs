@@ -243,11 +243,11 @@ reportFieldsSpec =
             .| Conduit.sinkList
       shouldBe
         result
-        [ Division {recordType = "1", order = "1", shooterId = "1", matchTypeId = "1", divisionCode = "OPN"},
-          Division {recordType = "2", order = "2", shooterId = "2", matchTypeId = "1", divisionCode = "OSR"},
-          Division {recordType = "3", order = "3", shooterId = "3", matchTypeId = "1", divisionCode = "OPN"},
-          Division {recordType = "4", order = "4", shooterId = "4", matchTypeId = "1", divisionCode = "OSR"},
-          Division {recordType = "5", order = "5", shooterId = "5", matchTypeId = "2", divisionCode = "RFPO"}
+        [ Division {recordType = "1", order = "1", shooterId = 1, matchTypeId = "1", divisionCode = "OPN"},
+          Division {recordType = "2", order = "2", shooterId = 2, matchTypeId = "1", divisionCode = "OSR"},
+          Division {recordType = "3", order = "3", shooterId = 3, matchTypeId = "1", divisionCode = "OPN"},
+          Division {recordType = "4", order = "4", shooterId = 4, matchTypeId = "1", divisionCode = "OSR"},
+          Division {recordType = "5", order = "5", shooterId = 5, matchTypeId = "2", divisionCode = "RFPO"}
         ]
 
 testTree :: IO TestTree
