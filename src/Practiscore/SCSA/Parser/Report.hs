@@ -9,6 +9,7 @@ module Practiscore.SCSA.Parser.Report
     toShooterStream,
     toScoreStream,
     toMatchInfoStream,
+    toDivisionStream,
   )
 where
 
@@ -22,7 +23,7 @@ import Practiscore.Parser
     lineStartingWith,
     prettifyParseError,
   )
-import Practiscore.SCSA.Parser.Division (divisionLine)
+import Practiscore.SCSA.Parser.Division (Division (..), decodeDivision, divisionLine)
 import Practiscore.SCSA.Parser.Score (Score (..), decodeScore, scoreLine)
 import Practiscore.SCSA.Parser.Shooter (Shooter (..), decodeShooter, shooterLine)
 import Practiscore.SCSA.Parser.Stage (Stage (..), decodeStage, stageLine)
@@ -120,6 +121,16 @@ zipInforWithHeaders = Conduit.concatMapAccumC step [[]]
     step line accum
       | not (null line) = (accum, [zipWith (\h l -> (h, l)) infoHeaders line])
     step _ accum = (accum, [])
+
+toDivisionStream :: (Monad m) => ConduitT ReportFields Division m ()
+toDivisionStream =
+  Conduit.awaitForever
+    ( \reportFields ->
+        case reportFields of
+          DivisionLine line -> Conduit.yield line
+          _ -> pure ()
+    )
+    .| decodeDivision
 
 toStageStream :: (Monad m) => ConduitT ReportFields Stage m ()
 toStageStream =
