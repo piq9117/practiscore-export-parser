@@ -16,7 +16,7 @@ import Text.Megaparsec (eof)
 import Prelude hiding (id)
 
 data Stage = Stage
-  { id :: Word8,
+  { id :: Word16,
     name :: Text,
     classifierCode :: Maybe Text
   }

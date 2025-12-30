@@ -32,6 +32,7 @@ data ReportFields
   | ShooterLine ![Text]
   | StageLine ![Text]
   | ScoreLine ![Text]
+  | Empty
   deriving stock (Show, Eq)
 
 parseReportFields :: String -> Either ParseError ReportFields
@@ -44,6 +45,7 @@ reportFields =
     <|> ((ShooterLine <<< (fmap toText)) <$> shooterLine)
     <|> ((StageLine <<< (fmap toText)) <$> stageLine)
     <|> ((ScoreLine <<< (fmap toText)) <$> scoreLine)
+    <|> pure Empty
 
 reportFieldStream :: (MonadThrow m, Monad m) => ConduitT String ReportFields m ()
 reportFieldStream =
