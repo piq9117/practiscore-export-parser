@@ -4,6 +4,7 @@ module Practiscore.SCSA.Parser.Division
   ( Division (..),
     decodeDivision,
     divisionLine,
+    emptyDivision,
   )
 where
 
@@ -16,7 +17,7 @@ import Text.Megaparsec (eof)
 data Division = Division
   { recordType :: Text,
     order :: Text,
-    shooterId :: Text,
+    shooterId :: Word16,
     matchTypeId :: Text,
     divisionCode :: Text
   }
@@ -30,7 +31,7 @@ decodeDivision =
              case header of
                "record type" -> modify (\division -> division {recordType = val})
                "order" -> modify (\division -> division {order = val})
-               "shooter id" -> modify (\division -> division {shooterId = val})
+               "shooter id" -> modify (\division -> division {shooterId = fromMaybe 0 $ readMaybe $ toString val})
                "match type id" -> modify (\division -> division {matchTypeId = val})
                "division code" -> modify (\division -> division {divisionCode = val})
                _ -> pure ()
@@ -43,7 +44,7 @@ emptyDivision =
   Division
     { recordType = mempty,
       order = mempty,
-      shooterId = mempty,
+      shooterId = 0,
       matchTypeId = mempty,
       divisionCode = mempty
     }

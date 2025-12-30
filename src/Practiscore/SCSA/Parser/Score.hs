@@ -4,6 +4,7 @@ module Practiscore.SCSA.Parser.Score
   ( Score (..),
     scoreLine,
     decodeScore,
+    emptyScore
   )
 where
 

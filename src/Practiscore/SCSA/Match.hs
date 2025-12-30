@@ -16,6 +16,7 @@ import Data.Csv
     namedRecord,
     (.=),
   )
+import Practiscore.SCSA.Parser.Division qualified
 import Practiscore.SCSA.Parser.Report qualified
 import Practiscore.SCSA.Parser.Score qualified
 import Practiscore.SCSA.Parser.Shooter qualified
@@ -30,7 +31,8 @@ data MatchRow = MatchRow
     score :: Practiscore.SCSA.Parser.Score.Score,
     stageNumber :: Word16,
     stageName :: Text,
-    classifierCode :: Maybe Text
+    classifierCode :: Maybe Text,
+    division :: Practiscore.SCSA.Parser.Division.Division
   }
   deriving stock (Show)
 
@@ -63,7 +65,8 @@ instance DefaultOrdered MatchRow where
         -- string 5
         "string_5_time",
         "string_5_penalty",
-        "string_5_dnf"
+        "string_5_dnf",
+        "division"
       ]
 
 instance ToNamedRecord MatchRow where
@@ -95,7 +98,8 @@ instance ToNamedRecord MatchRow where
         -- string 5
         "string_5_time" .= row.score.string5Time,
         "string_5_penalty" .= row.score.string5Penalty,
-        "string_5_dnf" .= (show @Text row.score.string5DNF)
+        "string_5_dnf" .= (show @Text row.score.string5DNF),
+        "division" .= row.division.divisionCode
       ]
 
 encodeMatch :: Match -> LByteString
@@ -108,19 +112,24 @@ getMatch ::
   [Practiscore.SCSA.Parser.Stage.Stage] ->
   [Practiscore.SCSA.Parser.Score.Score] ->
   [Practiscore.SCSA.Parser.Shooter.Shooter] ->
+  [Practiscore.SCSA.Parser.Division.Division] ->
   Match
-getMatch memberId matchInfo stages scores shooters =
-  case find (\shooter -> shooter.memberId == memberId) shooters of
-    Nothing -> []
-    Just shooter ->
-      [ MatchRow
+getMatch memberId matchInfo stages scores shooters divisions =
+  -- In steel challenge if a shooter has more than one gun, they are added in as
+  -- different shooter IDs.
+  foldr (\v accum -> v <> accum) [] $
+    [ [ MatchRow
           { shooter,
             matchName = matchInfo.matchName,
             matchDate = matchInfo.matchDate,
             score,
             stageNumber = score.stageNumber,
             stageName = maybe mempty (\stage -> stage.name) $ find (\stage -> stage.id == shooter.id) stages,
-            classifierCode = maybe mempty (\stage -> stage.classifierCode) $ find (\stage -> stage.id == shooter.id) stages
+            classifierCode = maybe mempty (\stage -> stage.classifierCode) $ find (\stage -> stage.id == shooter.id) stages,
+            division
           }
-        | score <- filter (\score -> score.shooterId == shooter.id) scores
       ]
+      | shooter <- filter (\shooter -> shooter.memberId == memberId) shooters,
+        score <- filter (\score -> score.shooterId == shooter.id) scores,
+        division <- filter (\division -> division.shooterId == shooter.id) divisions
+    ]
