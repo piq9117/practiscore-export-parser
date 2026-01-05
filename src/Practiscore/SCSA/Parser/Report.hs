@@ -3,6 +3,7 @@
 module Practiscore.SCSA.Parser.Report
   ( ReportFields (..),
     MatchInfo (..),
+    parseReportFields,
     reportFields,
     reportFieldStream,
     toStageStream,
