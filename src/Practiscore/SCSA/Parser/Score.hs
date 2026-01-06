@@ -17,7 +17,7 @@ import Text.Megaparsec (eof)
 
 data Score = Score
   { matchTypeId :: Word16,
-    stageNumber :: Word16,
+    stageId :: Word16,
     shooterId :: Word16,
     stageTotalTime :: Double,
     -- string 1
@@ -56,7 +56,7 @@ decodeScore =
                    case header of
                      "match type id" ->
                        modify (\score -> score {matchTypeId = fromMaybe 0 $ readMaybe $ toString val})
-                     "stage number" -> modify (\score -> score {stageNumber = fromMaybe 0 $ readMaybe $ toString val})
+                     "stage id" -> modify (\score -> score {stageId = fromMaybe 0 $ readMaybe $ toString val})
                      "shooter id" -> modify (\score -> score {shooterId = fromMaybe 0 $ readMaybe $ toString val})
                      "stage total" -> modify (\score -> score {stageTotalTime = fromMaybe 0.0 $ readMaybe $ toString val})
                      -- string 1
@@ -96,7 +96,7 @@ emptyScore :: Score
 emptyScore =
   Score
     { matchTypeId = 0,
-      stageNumber = 0,
+      stageId = 0,
       shooterId = 0,
       stageTotalTime = 0.0,
       string1Time = 0.0,
@@ -119,7 +119,7 @@ emptyScore =
 scoreHeaders :: [Text]
 scoreHeaders =
   [ "match type id",
-    "stage number",
+    "stage id",
     "shooter id",
     "stage total",
     -- string 1

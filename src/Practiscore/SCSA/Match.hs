@@ -29,7 +29,7 @@ data MatchRow = MatchRow
     matchName :: Text,
     matchDate :: Text,
     score :: Practiscore.SCSA.Parser.Score.Score,
-    stageNumber :: Word16,
+    stageId :: Word16,
     stageName :: Text,
     classifierCode :: Maybe Text,
     division :: Practiscore.SCSA.Parser.Division.Division
@@ -44,7 +44,7 @@ instance DefaultOrdered MatchRow where
         "lastname",
         "match_name",
         "match_date",
-        "stage_number",
+        "stage_id",
         "stage_total_time",
         -- string 1
         "string_1_time",
@@ -77,7 +77,7 @@ instance ToNamedRecord MatchRow where
         "lastname" .= row.shooter.lastname,
         "match_name" .= row.matchName,
         "match_date" .= row.matchDate,
-        "stage_number" .= row.stageNumber,
+        "stage_id" .= row.stageId,
         "stage_total_time" .= row.score.stageTotalTime,
         -- string 1
         "string_1_time" .= row.score.string1Time,
@@ -123,7 +123,7 @@ getMatch memberId matchInfo stages scores shooters divisions =
             matchName = matchInfo.matchName,
             matchDate = matchInfo.matchDate,
             score,
-            stageNumber = score.stageNumber,
+            stageId = score.stageId,
             stageName = maybe mempty (\stage -> stage.name) $ find (\stage -> stage.id == shooter.id) stages,
             classifierCode = maybe mempty (\stage -> stage.classifierCode) $ find (\stage -> stage.id == shooter.id) stages,
             division
