@@ -14,6 +14,7 @@ import Data.Conduit.Lift (evalStateC)
 import Practiscore.Parser (Parser, cells, lineStartingWith)
 import Text.Megaparsec (eof)
 
+-- | Every division is assigned to a different shooter id
 data Division = Division
   { recordType :: Text,
     order :: Text,
