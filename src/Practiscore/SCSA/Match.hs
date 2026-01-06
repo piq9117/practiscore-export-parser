@@ -123,7 +123,7 @@ getMatch memberId matchInfo stages scores shooters divisions =
             matchName = matchInfo.matchName,
             matchDate = matchInfo.matchDate,
             score,
-            stageNumber = score.stageNumber,
+            stageNumber = score.stageId,
             stageName = maybe mempty (\stage -> stage.name) $ find (\stage -> stage.id == shooter.id) stages,
             classifierCode = maybe mempty (\stage -> stage.classifierCode) $ find (\stage -> stage.id == shooter.id) stages,
             division
