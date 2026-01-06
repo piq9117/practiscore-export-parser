@@ -45,6 +45,7 @@ instance DefaultOrdered MatchRow where
         "match_name",
         "match_date",
         "stage_id",
+        "stage_name",
         "stage_total_time",
         -- string 1
         "string_1_time",
@@ -66,6 +67,7 @@ instance DefaultOrdered MatchRow where
         "string_5_time",
         "string_5_penalty",
         "string_5_dnf",
+        "classifier_code",
         "division"
       ]
 
@@ -78,6 +80,7 @@ instance ToNamedRecord MatchRow where
         "match_name" .= row.matchName,
         "match_date" .= row.matchDate,
         "stage_id" .= row.stageId,
+        "stage_name" .= row.stageName,
         "stage_total_time" .= row.score.stageTotalTime,
         -- string 1
         "string_1_time" .= row.score.string1Time,
@@ -99,6 +102,7 @@ instance ToNamedRecord MatchRow where
         "string_5_time" .= row.score.string5Time,
         "string_5_penalty" .= row.score.string5Penalty,
         "string_5_dnf" .= (show @Text row.score.string5DNF),
+        "classifier_code" .= row.classifierCode,
         "division" .= row.division.divisionCode
       ]
 
