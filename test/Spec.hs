@@ -1,5 +1,6 @@
 module Spec (main) where
 
+import Spec.Core.Parser qualified
 import Spec.SCSA.Parser.Report qualified
 import Spec.USPSA.Match qualified
 import Spec.USPSA.Parser.Report qualified
@@ -12,7 +13,8 @@ main :: IO ()
 main =
   (defaultMain <<< testGroup "Parser Spec")
     =<< sequence
-      [ Spec.USPSA.Parser.Shooter.testTree,
+      [ Spec.Core.Parser.testTree,
+        Spec.USPSA.Parser.Shooter.testTree,
         Spec.USPSA.Parser.Stage.testTree,
         Spec.USPSA.Parser.Score.testTree,
         Spec.USPSA.Parser.Report.testTree,
