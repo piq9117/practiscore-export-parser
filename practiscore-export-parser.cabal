@@ -114,6 +114,7 @@ test-suite practiscore-export-parser-test
     , tasty-hspec
 
   other-modules:
+    Spec.Core.Parser
     Spec.SCSA.Parser.Report
     Spec.USPSA.Match
     Spec.USPSA.Parser.Report

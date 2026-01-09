@@ -10,8 +10,8 @@ module Practiscore.Parser
   )
 where
 
-import Control.Monad.Combinators (sepBy)
-import Text.Megaparsec (Parsec, noneOf, notFollowedBy, try)
+import Control.Monad.Combinators (manyTill, sepBy)
+import Text.Megaparsec (Parsec, anySingle, noneOf, notFollowedBy, try)
 import Text.Megaparsec.Char (char, string)
 import Text.Megaparsec.Error (ParseErrorBundle, errorBundlePretty)
 
@@ -27,7 +27,10 @@ cells =
   cell `sepBy` ","
 
 cell :: Parser String
-cell = many (noneOf @[] ",\n\r")
+cell = quoted <|> unquoted
+  where
+    quoted = char '"' *> manyTill anySingle (char '"')
+    unquoted = many (noneOf @[] ",\n\r")
 
 data ParseError = ParseError Text
   deriving stock (Show)
