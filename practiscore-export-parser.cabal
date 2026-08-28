@@ -63,24 +63,31 @@ common common-option
     OverloadedRecordDot
     OverloadedStrings
 
+  build-depends:
+    , base
+    , relude
+
 library
   import:           common-option
   hs-source-dirs:   src
   default-language: GHC2021
   build-depends:
-    , base
     , bytestring
     , cassava
     , conduit
     , exceptions
+    , fakedata
     , megaparsec
     , optparse-applicative
     , parser-combinators
-    , relude
+    , prettyprinter
+    , random
     , text
+    , time
 
   exposed-modules:
     Practiscore.CLI
+    Practiscore.Generator.USPSA
     Practiscore.Parser
     Practiscore.SCSA.CLI
     Practiscore.SCSA.Match
@@ -109,7 +116,6 @@ test-suite practiscore-export-parser-test
     , hspec
     , megaparsec
     , practiscore-export-parser
-    , relude
     , tasty
     , tasty-hspec
 
@@ -125,10 +131,13 @@ test-suite practiscore-export-parser-test
 executable ps-tap
   import:           common-option
   main-is:          Main.hs
-  build-depends:
-    , base
-    , practiscore-export-parser
-    , relude
-
+  build-depends:    practiscore-export-parser
   hs-source-dirs:   ps-tap
+  default-language: GHC2021
+
+executable ps-gen
+  import:           common-option
+  main-is:          Main.hs
+  build-depends:    practiscore-export-parser
+  hs-source-dirs:   ps-gen
   default-language: GHC2021
