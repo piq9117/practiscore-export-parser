@@ -1,6 +1,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Practiscore.Generator.USPSA (runPsGenCli) where
+module Practiscore.Generator.USPSA (runPsGenCli, prettyReportFields) where
 
 import Conduit (MonadUnliftIO, runConduitRes, sinkFile, yield, (.|))
 import Data.Time.Format (defaultTimeLocale, formatTime)
@@ -23,10 +23,20 @@ import Options.Applicative
     strOption,
   )
 import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
-import Practiscore.USPSA.Parser.Report (Report (..))
+import Practiscore.USPSA.Parser.Report (Report (..), ReportFields (..))
 import Practiscore.USPSA.Parser.Score (Score (..))
 import Practiscore.USPSA.Parser.Shooter (Shooter (..))
-import Prettyprinter (Doc, comma, defaultLayoutOptions, layoutPretty, pretty, vsep)
+import Prettyprinter
+  ( Doc,
+    comma,
+    concatWith,
+    defaultLayoutOptions,
+    layoutPretty,
+    line,
+    pretty,
+    vsep,
+    (<+>),
+  )
 import Prettyprinter.Render.Text (renderStrict)
 import System.Random (randomIO, randomRIO)
 
@@ -56,16 +66,17 @@ showHelpOnErrorOnExecParser = customExecParser (prefs showHelpOnError)
 
 prettyReport :: Report -> Doc ann
 prettyReport report =
-  (pretty $ "A " <> report.summary)
-    <> "\n"
+  (concatWith (\a b -> a <> line <> b <> line) $ (prettyReportFields <<< InfoMetadata) <$> report.infoMetadata)
+    <> (pretty $ "A " <> report.summary)
+    <> line
     <> pretty shooterHeader
-    <> "\n"
+    <> line
     <> (vsep $ (\shooter -> "E " <> prettyShooter shooter) <$> report.shooters)
-    <> "\n"
+    <> line
     <> pretty scoreHeader
-    <> "\n"
+    <> line
     <> (vsep $ (\score -> "I " <> prettyScore score) <$> report.scores)
-    <> "\n"
+    <> line
     <> "$END"
 
 genReport :: (MonadIO m) => Text -> m Report
@@ -80,6 +91,9 @@ genReport uspsaMemberId = do
     genShooter (UspsaMemberId {unUspsaMemberId = uspsaMemberId}) >>= \shooter -> do
       scores <- replicateM 10 (genScore shooter)
       pure (shooter, scores)
+
+  let formattedMatchDate = toText $ formatTime defaultTimeLocale "%m/%d/%y" matchDate
+
   pure $
     Report
       { summary =
@@ -87,10 +101,13 @@ genReport uspsaMemberId = do
             <> ","
             <> matchName
             <> ","
-            <> (toText $ formatTime defaultTimeLocale "%m/%d/%y" matchDate),
+            <> formattedMatchDate,
         shooters = [shooter],
         scores = join scores,
-        infoMetadata = []
+        infoMetadata =
+          [ "Match name: " <> matchName,
+            "Match date: " <> formattedMatchDate
+          ]
       }
 
 genCompId :: (MonadIO m) => m CompId
@@ -341,6 +358,21 @@ prettyShooter shooter =
     <> pretty shooter.law
     <> comma
     <> pretty shooter.military
+
+prettyReportFields :: ReportFields -> Doc ann
+prettyReportFields reportFields =
+  case reportFields of
+    Title title -> "$PRACTISCORE" <+> pretty title
+    InfoMetadata metadata -> "$INFO" <+> pretty metadata
+    ZMetadata metadata -> "Z" <+> pretty metadata
+    Summary summary -> "A" <+> pretty summary
+    ShooterHeaderLine headerline -> "D" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> headerline)
+    ShooterLine shooterLine -> "E" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> shooterLine)
+    StageHeaderLine headerLine -> "F" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> headerLine)
+    StageLine stageLine -> "G" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> stageLine)
+    ScoreHeaderLine headerLine -> "H" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> headerLine)
+    ScoreLine scores -> "I" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> scores)
+    End -> "$END"
 
 shooterHeader :: Text
 shooterHeader = "D Comp,USPSA,FirstName,LastName,DQPistol,DQRifle,DQShotgun,Reentry,Class,Division,Match Points,Place Overall,Power Factor,Shotgun Division,Shotgun Power Factor,Shotgun Place Overall,Shotgun Entered,Shotgun Match Points,Rifle Division,Rifle Power Factor,Rifle Place Overall,Rifle Entered,Rifle Match Points,Aggregate,Aggregate Division,Aggregate Pistol Percent,Aggregate Pistol Points,Aggregate Place,Aggregate Rifle Percent,Aggregate Rifle Points,Aggregate Shotgun Percent,Aggregate Shotgun Points,Aggregate Total,Female,Age,Law,Military"
