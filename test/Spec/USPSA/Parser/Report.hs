@@ -184,7 +184,20 @@ reportParserSpec = do
 
       shouldBe
         res
-        (Just (StageInfo {number = 1, name = "I Am A Meat Popsicle", classifier = False, classifierNumber = Nothing}))
+        ( Just
+            ( StageInfo
+                { number = 1,
+                  name = "I Am A Meat Popsicle",
+                  classifier = False,
+                  classifierNumber = Nothing,
+                  gunType = "Pistol",
+                  minimumRounds = 0,
+                  maximumPoints = 0,
+                  scoringType = "Comstock",
+                  timesRun = 1
+                }
+            )
+        )
 
     it "reportFields - stages" $ do
       let stages =

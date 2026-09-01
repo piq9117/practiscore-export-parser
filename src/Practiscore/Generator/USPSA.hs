@@ -1,12 +1,15 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Practiscore.Generator.USPSA (runPsGenCli, prettyReportFields) where
+-- module Practiscore.Generator.USPSA (runPsGenCli, prettyReportFields) where
+module Practiscore.Generator.USPSA where
 
 import Conduit (MonadUnliftIO, runConduitRes, sinkFile, yield, (.|))
 import Data.Time.Format (defaultTimeLocale, formatTime)
 import Faker (generateNonDeterministic)
 import Faker.Company qualified
 import Faker.DateTime qualified
+import Faker.DrivingLicense qualified
+import Faker.Movie qualified
 import Faker.Name qualified
 import Options.Applicative
   ( Parser,
@@ -26,11 +29,13 @@ import Practiscore.USPSA (CompId (..), UspsaMemberId (..))
 import Practiscore.USPSA.Parser.Report (Report (..), ReportFields (..))
 import Practiscore.USPSA.Parser.Score (Score (..))
 import Practiscore.USPSA.Parser.Shooter (Shooter (..))
+import Practiscore.USPSA.Parser.Stage (StageInfo (..))
 import Prettyprinter
   ( Doc,
     comma,
     concatWith,
     defaultLayoutOptions,
+    dquotes,
     layoutPretty,
     line,
     pretty,
@@ -64,22 +69,26 @@ runPsGenCli = do
 showHelpOnErrorOnExecParser :: ParserInfo a -> IO a
 showHelpOnErrorOnExecParser = customExecParser (prefs showHelpOnError)
 
-prettyReport :: Report -> Doc ann
-prettyReport report =
+prettyReport :: (Report, [StageInfo]) -> Doc ann
+prettyReport (report, stageInfo) =
   (concatWith (\a b -> a <> line <> b <> line) $ (prettyReportFields <<< InfoMetadata) <$> report.infoMetadata)
-    <> (pretty $ "A " <> report.summary)
+    <> ("A" <+> pretty report.summary)
     <> line
     <> pretty shooterHeader
     <> line
-    <> (vsep $ (\shooter -> "E " <> prettyShooter shooter) <$> report.shooters)
+    <> (vsep $ (\shooter -> "E" <+> prettyShooter shooter) <$> report.shooters)
+    <> line
+    <> pretty stageHeader
+    <> line
+    <> (vsep $ (\stage -> "G" <+> prettyStage stage) <$> stageInfo)
     <> line
     <> pretty scoreHeader
     <> line
-    <> (vsep $ (\score -> "I " <> prettyScore score) <$> report.scores)
+    <> (vsep $ (\score -> "I" <+> prettyScore score) <$> report.scores)
     <> line
     <> "$END"
 
-genReport :: (MonadIO m) => Text -> m Report
+genReport :: (MonadIO m) => Text -> m (Report, [StageInfo])
 genReport uspsaMemberId = do
   clubName <- liftIO $ generateNonDeterministic Faker.Company.name
   matchName <- liftIO $ generateNonDeterministic Faker.Company.name
@@ -87,28 +96,33 @@ genReport uspsaMemberId = do
     liftIO $
       generateNonDeterministic
         (Faker.DateTime.dayBetweenYears 2020 2026)
-  (shooter, scores) <-
-    genShooter (UspsaMemberId {unUspsaMemberId = uspsaMemberId}) >>= \shooter -> do
-      scores <- replicateM 10 (genScore shooter)
-      pure (shooter, scores)
+  shooter <- genShooter (UspsaMemberId {unUspsaMemberId = uspsaMemberId})
+
+  let iteration = take 10 $ iterate (\n -> n + 1) 1
+  stages <- forM iteration $ \i ->
+    genStage i
+  scores <- forM stages $ \stage ->
+    genScore stage.number shooter
 
   let formattedMatchDate = toText $ formatTime defaultTimeLocale "%m/%d/%y" matchDate
 
   pure $
-    Report
-      { summary =
-          clubName
-            <> ","
-            <> matchName
-            <> ","
-            <> formattedMatchDate,
-        shooters = [shooter],
-        scores = join scores,
-        infoMetadata =
-          [ "Match name: " <> matchName,
-            "Match date: " <> formattedMatchDate
-          ]
-      }
+    ( Report
+        { summary =
+            clubName
+              <> ","
+              <> matchName
+              <> ","
+              <> formattedMatchDate,
+          shooters = [shooter],
+          scores = scores,
+          infoMetadata =
+            [ "Match name: " <> matchName,
+              "Match date: " <> formattedMatchDate
+            ]
+        },
+      stages
+    )
 
 genCompId :: (MonadIO m) => m CompId
 genCompId = do
@@ -116,6 +130,31 @@ genCompId = do
   pure $
     CompId
       { unCompId
+      }
+
+genStage :: (MonadIO m) => Word8 -> m StageInfo
+genStage stageNumber = do
+  name <- liftIO $ generateNonDeterministic Faker.Movie.title
+  isClassifier <- randomRIO (True, False)
+  minimumRounds <- randomRIO (5, 32)
+  classifierNumber <-
+    if isClassifier
+      then
+        fmap Just $
+          liftIO $
+            generateNonDeterministic Faker.DrivingLicense.usaPennsylvania
+      else pure Nothing
+  pure
+    StageInfo
+      { number = stageNumber,
+        gunType = "Pistol",
+        minimumRounds,
+        maximumPoints = minimumRounds * 5,
+        classifier = isClassifier,
+        classifierNumber,
+        name,
+        scoringType = "Comstock",
+        timesRun = 1
       }
 
 genShooter :: (MonadIO m) => UspsaMemberId -> m Shooter
@@ -137,7 +176,7 @@ genShooter uspsaMemberId = do
         dqshotgun = mempty,
         reentry = mempty,
         class_,
-        division = "",
+        division = "CO",
         matchPoints,
         placeOverall,
         powerFactor = "125",
@@ -167,25 +206,25 @@ genShooter uspsaMemberId = do
         military = ""
       }
 
-genScore :: (MonadIO m) => Shooter -> m [Score]
-genScore shooter = replicateM 5 $ do
+genScore :: (MonadIO m) => Word8 -> Shooter -> m Score
+genScore stageNumber shooter = do
   a <- randomIO @Word8
   b <- randomIO @Word8
   c <- randomIO @Word8
   d <- randomIO @Word8
-  time <- randomIO @Double
-  rawPoints <- randomIO @Word8
-  totalPoints <- randomIO @Word8
-  hitFactor <- randomIO @Double
-  stagePoints <- randomIO @Double
-  stagePlace <- randomIO @Word8
+  time <- randomRIO (5.0, 35.0)
+  rawPoints <- randomRIO (0, 160)
+  totalPoints <- randomRIO (0, 160)
+  hitFactor <- randomRIO (0.0, 11.0)
+  stagePoints <- randomRIO (0.0, 100.0)
+  stagePlace <- randomRIO (1, 100)
   pure $
     Score
       { gun = "Pistol",
-        stage = 0,
+        stage = stageNumber,
         comp = shooter.comp,
-        dQ = "",
-        dNF = "",
+        dQ = "No",
+        dNF = "No",
         a,
         b,
         c,
@@ -374,8 +413,31 @@ prettyReportFields reportFields =
     ScoreLine scores -> "I" <+> concatWith (\h d -> h <> comma <> d) (pretty <$> scores)
     End -> "$END"
 
+prettyStage :: StageInfo -> Doc ann
+prettyStage stageInfo =
+  pretty stageInfo.number
+    <> comma
+    <> pretty stageInfo.gunType
+    <> comma
+    <> pretty stageInfo.minimumRounds
+    <> comma
+    <> pretty stageInfo.maximumPoints
+    <> comma
+    <> pretty stageInfo.classifier
+    <> comma
+    <> pretty stageInfo.classifierNumber
+    <> comma
+    <> (dquotes $ pretty stageInfo.name)
+    <> comma
+    <> pretty stageInfo.scoringType
+    <> comma
+    <> pretty stageInfo.timesRun
+
 shooterHeader :: Text
 shooterHeader = "D Comp,USPSA,FirstName,LastName,DQPistol,DQRifle,DQShotgun,Reentry,Class,Division,Match Points,Place Overall,Power Factor,Shotgun Division,Shotgun Power Factor,Shotgun Place Overall,Shotgun Entered,Shotgun Match Points,Rifle Division,Rifle Power Factor,Rifle Place Overall,Rifle Entered,Rifle Match Points,Aggregate,Aggregate Division,Aggregate Pistol Percent,Aggregate Pistol Points,Aggregate Place,Aggregate Rifle Percent,Aggregate Rifle Points,Aggregate Shotgun Percent,Aggregate Shotgun Points,Aggregate Total,Female,Age,Law,Military"
+
+stageHeader :: Text
+stageHeader = "F Number,Guntype,Minimum Rounds,Maximum Points,Classifier,Classifier_No,Stage_name,ScoringType,TimesRun"
 
 scoreHeader :: Text
 scoreHeader = "H Gun,Stage,Comp,DQ,DNF,A,B,C,D,Miss,No Shoot,Procedural,Double Poppers,Double Popper Miss,Late Shot,Extra Shot,Extra Hit,No Penalty Miss,Additional Penalty,Total Penalty,T1,T2,T3,T4,T5,Time,Raw Points,Total Points,Hit Factor,Stage Points,Stage Place,Stage Power Factor"
