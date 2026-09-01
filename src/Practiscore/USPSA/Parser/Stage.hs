@@ -22,9 +22,14 @@ import Text.Megaparsec.Char (newline)
 
 data StageInfo = StageInfo
   { number :: Word8,
-    name :: Text,
+    gunType :: Text,
+    minimumRounds :: Word8,
+    maximumPoints :: Word8,
     classifier :: Bool,
-    classifierNumber :: Maybe Text
+    classifierNumber :: Maybe Text,
+    name :: Text,
+    scoringType :: Text,
+    timesRun :: Word8
   }
   deriving (Show, Eq)
 
@@ -32,9 +37,14 @@ emptyStageInfo :: StageInfo
 emptyStageInfo =
   StageInfo
     { number = 0,
-      name = mempty,
+      gunType = "Pistol",
+      minimumRounds = 0,
+      maximumPoints = 0,
       classifier = False,
-      classifierNumber = Nothing
+      classifierNumber = Nothing,
+      name = mempty,
+      scoringType = "Comstock",
+      timesRun = 1
     }
 
 decodeStageInfo :: (Monad m) => ConduitT [(Text, Text)] StageInfo m ()
