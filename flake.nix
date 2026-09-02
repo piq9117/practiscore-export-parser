@@ -1,7 +1,7 @@
 {
   description = "Basic haskell cabal template";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = github:NixOS/nixpkgs/3b9f00d7a7bf68acd4c4abb9d43695afb04e03a5;
 
   outputs = { self, nixpkgs }:
     let
@@ -36,7 +36,7 @@
         in
         {
           default = pkgs.hsPkgs.shellFor {
-            packages = hsPkgs: [ ];
+            packages = hsPkgs: [ pkgs.ps-tap ];
             buildInputs = with pkgs; [
               hsPkgs.cabal-install
               hsPkgs.cabal-fmt
