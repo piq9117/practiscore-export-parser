@@ -17,6 +17,7 @@
           overrides = hfinal: hprev: { };
         };
         ps-tap = final.hsPkgs.callCabal2nix "ps-tap" ./. { };
+        ps-gen = final.hsPkgs.callCabal2nix "ps-gen" ./. { };
       };
 
       packages = forAllSystems (system:
@@ -25,6 +26,7 @@
         in
         {
           ps-tap = pkgs.ps-tap;
+          ps-gen = pkgs.ps-gen;
           check-formatting = pkgs.writeShellApplication {
             name = "check-formatting";
             runtimeInputs = with pkgs; [
@@ -56,7 +58,7 @@
         in
         {
           default = pkgs.hsPkgs.shellFor {
-            packages = hsPkgs: [ pkgs.ps-tap ];
+            packages = hsPkgs: [ pkgs.ps-tap pkgs.ps-gen ];
             buildInputs = with pkgs; [
               hsPkgs.cabal-install
               hsPkgs.cabal-fmt
@@ -65,6 +67,9 @@
               treefmt
               nixpkgs-fmt
             ] ++ libs;
+            nativeBuildInputs = with pkgs; [
+              hsPkgs.cabal-install
+            ];
             shellHook = "export PS1='[$PWD]\n❄ '";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
           };
