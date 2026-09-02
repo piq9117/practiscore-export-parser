@@ -104,7 +104,7 @@ genReport uspsaMemberId = do
   scores <- forM stages $ \stage ->
     genScore stage.number shooter
 
-  let formattedMatchDate = toText $ formatTime defaultTimeLocale "%m/%d/%y" matchDate
+  let formattedMatchDate = toText $ formatTime defaultTimeLocale "%m/%d/%Y" matchDate
 
   pure $
     ( Report
