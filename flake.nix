@@ -25,6 +25,26 @@
         in
         {
           ps-tap = pkgs.ps-tap;
+          check-formatting = pkgs.writeShellApplication {
+            name = "check-formatting";
+            runtimeInputs = with pkgs; [
+              nixpkgs-fmt
+              treefmt
+              hsPkgs.cabal-fmt
+              ormolu
+            ];
+            text = ''
+              ${pkgs.treefmt}/bin/treefmt --version
+              ${pkgs.treefmt}/bin/treefmt
+
+              if [[ -n "$(git diff --stat)" ]]; then
+                git status
+                echo "FAIL: found some changes"
+                git diff
+                exit 1
+              fi
+            '';
+          };
         });
 
       devShells = forAllSystems (system:
@@ -44,7 +64,6 @@
               ormolu
               treefmt
               nixpkgs-fmt
-              hsPkgs.cabal-fmt
             ] ++ libs;
             shellHook = "export PS1='[$PWD]\n❄ '";
             LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
